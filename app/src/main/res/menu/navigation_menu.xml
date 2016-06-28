@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+
+    <group
+        android:id="@+id/group1"
+        android:checkableBehavior="none"
+        >
+        <item
+            android:id="@+id/menu_meizhi"
+            android:icon="@mipmap/ic_favorite_black_24dp"
+            android:title="妹纸"/>
+        <item
+            android:id="@+id/menu_history"
+            android:icon="@mipmap/ic_history_black_24dp"
+            android:title="足迹"/>
+
+        <item
+            android:id="@+id/menu_collections"
+            android:icon="@mipmap/ic_bookmark_border_black_24dp"
+            android:title="收藏"/>
+    </group>
+
+    <group
+        android:id="@+id/group2"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/menu_feedback"
+            android:icon="@mipmap/ic_mode_edit_black_24dp"
+            android:title="反馈"/>
+
+        <item
+            android:id="@+id/menu_setting"
+            android:icon="@mipmap/ic_settings_black_24dp"
+            android:title="设置"/>
+    </group>
+</menu>
