@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:clipToPadding="false"
     android:orientation="vertical">
 
     <android.support.design.widget.AppBarLayout
@@ -18,7 +19,6 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
-            app:layout_scrollFlags="scroll|enterAlways"
             app:navigationIcon="@mipmap/ic_arrow_back_white_24dp"
             app:popupTheme="@style/AppTheme.PopupOverlay"
             app:titleTextAppearance="@style/WebViewTitle"
@@ -28,8 +28,8 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <WebView
             android:id="@+id/webview"
@@ -44,6 +44,7 @@
             android:max="100"
             android:maxHeight="2dp"
             android:minHeight="2dp"
+            android:progressDrawable="@drawable/web_load_progress_drawable"
             tools:progress="50"/>
     </FrameLayout>
 
@@ -84,7 +85,7 @@
                 android:layout_width="47dp"
                 android:layout_height="47dp"
                 android:scaleType="center"
-                android:src="@mipmap/ic_favorite_black_24dp"/>
+                android:src="@mipmap/ic_favorite_border_349df9_24dp"/>
         </LinearLayout>
     </RelativeLayout>
-</android.support.design.widget.CoordinatorLayout>
+</LinearLayout>

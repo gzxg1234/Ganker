@@ -1,0 +1,428 @@
+package com.sanron.ganker.ui;
+
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.SparseArray;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.sanron.ganker.R;
+import com.sanron.ganker.data.GankerRetrofit;
+import com.sanron.ganker.data.entity.Gank;
+import com.sanron.ganker.data.entity.SearchData;
+import com.sanron.ganker.ui.base.BaseFragment;
+import com.sanron.ganker.util.DimenTool;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
+import java.util.ArrayList;
+import java.util.List;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
+
+/**
+ * Created by sanron on 16-6-30.
+ */
+public class SearchFragment extends BaseFragment implements TextWatcher, TextView.OnEditorActionListener {
+
+    @BindView(R.id.et_word)
+    EditText etWord;
+    @BindView(R.id.iv_back)
+    View ivBack;
+    @BindView(R.id.id_clear)
+    View clear;
+    @BindView(R.id.list_search_history)
+    RecyclerView mListSearchHistory;
+    @BindView(R.id.view_search_result)
+    View mViewSearchResult;
+    @BindView(R.id.view_pager)
+    ViewPager mViewPager;
+
+    private HistoryAdapter mHistoryAdapter;
+    private static final String[] PAGE_CATEGORIES = {Gank.CATEGORY_ANDROID,
+            Gank.CATEGORY_IOS, Gank.CATEGORY_FRONT_END, Gank.CATEGORY_EXPAND};
+
+    @Override
+    public int getLayoutId() {
+        return R.layout.fragment_search;
+    }
+
+    public static SearchFragment newInstance() {
+        return new SearchFragment();
+    }
+
+    @Override
+    public void initView(View root, Bundle savedInstanceState) {
+        super.initView(root, savedInstanceState);
+        mHistoryAdapter = new HistoryAdapter();
+        etWord.addTextChangedListener(this);
+        etWord.setOnEditorActionListener(this);
+        mListSearchHistory.setLayoutManager(new LinearLayoutManager(getContext()));
+        mListSearchHistory.setAdapter(mHistoryAdapter);
+        getHistory()
+                .subscribe(new Action1<List<String>>() {
+                    @Override
+                    public void call(List<String> strings) {
+                        mHistoryAdapter.setData(strings);
+                    }
+                });
+    }
+
+    public Observable<List<String>> getHistory() {
+        return Observable
+                .create(new Observable.OnSubscribe<List<String>>() {
+                    @Override
+                    public void call(Subscriber<? super List<String>> subscriber) {
+                        List<String> history = new ArrayList<>();
+                        File file = new File(getContext().getFilesDir(), "search_history");
+                        if (file.exists()) {
+                            try {
+                                FileInputStream fis = new FileInputStream(file);
+                                ObjectInputStream ois = new ObjectInputStream(fis);
+                                history = (List<String>) ois.readObject();
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (StreamCorruptedException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        subscriber.onNext(history);
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Observable<Boolean> saveHistory(final List<String> items) {
+        return Observable
+                .create(new Observable.OnSubscribe<Boolean>() {
+                    @Override
+                    public void call(Subscriber<? super Boolean> subscriber) {
+                        File file = new File(getContext().getFilesDir(), "search_history");
+                        try {
+                            FileOutputStream fos = new FileOutputStream(file);
+                            ObjectOutputStream oos = new ObjectOutputStream(fos);
+                            oos.writeObject(items);
+                            oos.flush();
+                            oos.close();
+                            fos.close();
+                            subscriber.onNext(true);
+                            return;
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        } catch (StreamCorruptedException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        subscriber.onNext(false);
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH
+                || (event != null && event.getAction() == KeyEvent.KEYCODE_ENTER)) {
+            final String word = v.getText().toString();
+            if (!TextUtils.isEmpty(word)) {
+                if (!mHistoryAdapter.getData().contains(word)) {
+                    //保存搜索历史
+                    List<String> items = new ArrayList<>(mHistoryAdapter.getData());
+                    items.add(word);
+                    saveHistory(items)
+                            .subscribe(new Action1<Boolean>() {
+                                @Override
+                                public void call(Boolean aBoolean) {
+                                    if (aBoolean) {
+                                        mHistoryAdapter.add(word);
+                                    }
+                                }
+                            });
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+
+    public class LocalPagerAdapter extends FragmentPagerAdapter {
+
+        private String mWord;
+        private SparseArray<GankPagerFragment> mInitedFragment = new SparseArray<>();
+
+        public LocalPagerAdapter(FragmentManager fm, String word) {
+            super(fm);
+            mWord = word;
+        }
+
+        public void setWord(String word) {
+            if (word.equals(mWord)) {
+                return;
+            }
+            mWord = word;
+            for (int i = 0; i < mInitedFragment.size(); i++) {
+                mInitedFragment.get(i).setObservableCreator(getCreator(PAGE_CATEGORIES[i]));
+            }
+        }
+
+        private GankPagerFragment.ObservableCreator getCreator(final String category) {
+            return new GankPagerFragment.ObservableCreator() {
+                @Override
+                public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
+                    return GankerRetrofit.get()
+                            .getGankService()
+                            .search(mWord, category, pageSize, page)
+                            .map(new Func1<SearchData, List<? extends Gank>>() {
+                                @Override
+                                public List<? extends Gank> call(SearchData searchData) {
+                                    return searchData.results;
+                                }
+                            });
+                }
+            };
+        }
+
+        @Override
+        public Fragment getItem(final int position) {
+            GankPagerFragment gankPagerFragment = GankPagerFragment.newInstance(
+                    getCreator(PAGE_CATEGORIES[position]));
+            mInitedFragment.put(position, gankPagerFragment);
+            return gankPagerFragment;
+        }
+
+        @Override
+        public int getCount() {
+            return PAGE_CATEGORIES.length;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return PAGE_CATEGORIES[position];
+        }
+    }
+
+
+    public class HistoryAdapter extends RecyclerView.Adapter {
+
+        private List<String> mItems = new ArrayList<>();
+        private final int TYPE_ITEM = 0;
+        private final int TYPE_CLEAR = 1;
+        final int TEXT_COLOR = getContext().getResources().getColor(R.color.textColorSecondary);
+
+        public List<String> getData() {
+            return mItems;
+        }
+
+        public void add(String item) {
+            mItems.add(item);
+            notifyItemInserted(getItemCount());
+        }
+
+        public void setData(List<String> items) {
+            mItems.clear();
+            if (items != null) {
+                mItems.addAll(items);
+            }
+            notifyDataSetChanged();
+        }
+
+        public void remove(int position) {
+            mItems.remove(position);
+            notifyItemRemoved(position);
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if (position == getItemCount() - 1) {
+                return TYPE_CLEAR;
+            }
+            return TYPE_ITEM;
+        }
+
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            if (viewType == TYPE_CLEAR) {
+                TextView tvClear = new TextView(getContext());
+                tvClear.setTextSize(15);
+                tvClear.setText("清除搜索记录");
+                final int padding = DimenTool.dpToPx(getContext(), 8);
+                tvClear.setPadding(padding, padding, padding, padding);
+                tvClear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
+                tvClear.setGravity(Gravity.CENTER);
+                tvClear.setTextColor(getResources().getColor(R.color.colorPrimary));
+                return new FooterHolder(tvClear);
+            } else {
+                View view = LayoutInflater.from(getContext()).inflate(R.layout.list_history_item, parent, false);
+                Holder holder = new Holder(view);
+                DrawableCompat.setTint(holder.ivHistory.getDrawable().mutate(), TEXT_COLOR);
+                DrawableCompat.setTint(holder.del.getDrawable().mutate(), TEXT_COLOR);
+                return holder;
+            }
+        }
+
+        @Override
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+            if (holder instanceof FooterHolder) {
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        saveHistory(new ArrayList<String>())
+                                .subscribe(new Action1<Boolean>() {
+                                    @Override
+                                    public void call(Boolean aBoolean) {
+                                        if (aBoolean) {
+                                            setData(null);
+                                        }
+                                    }
+                                });
+                    }
+                });
+            } else if (holder instanceof Holder) {
+                ((Holder) holder).setWord(mItems.get(position));
+                ((Holder) holder).del.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        List<String> items = new ArrayList<>(mHistoryAdapter.getData());
+                        items.remove(position);
+                        saveHistory(items)
+                                .subscribe(new Action1<Boolean>() {
+                                    @Override
+                                    public void call(Boolean aBoolean) {
+                                        if (aBoolean) {
+                                            remove(position);
+                                        }
+                                    }
+                                });
+                    }
+                });
+                ((Holder) holder).itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                });
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            int itemSize = mItems.size();
+            return itemSize == 0 ? 0 : itemSize + 1;
+        }
+
+        class FooterHolder extends RecyclerView.ViewHolder {
+            public FooterHolder(View itemView) {
+                super(itemView);
+            }
+        }
+
+        class Holder extends RecyclerView.ViewHolder {
+
+            @BindView(R.id.iv_history)
+            ImageView ivHistory;
+            @BindView(R.id.tv_word)
+            TextView tvWord;
+            @BindView(R.id.iv_del)
+            ImageView del;
+            String word;
+
+            public Holder(View itemView) {
+                super(itemView);
+                ButterKnife.bind(this, itemView);
+            }
+
+            public void setWord(String word) {
+                this.word = word;
+                tvWord.setText(word);
+            }
+        }
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        if (TextUtils.isEmpty(s)) {
+            clear.setVisibility(View.INVISIBLE);
+            mViewSearchResult.setVisibility(View.INVISIBLE);
+            mListSearchHistory.setVisibility(View.VISIBLE);
+        } else {
+            clear.setVisibility(View.VISIBLE);
+            mViewSearchResult.setVisibility(View.VISIBLE);
+            mListSearchHistory.setVisibility(View.INVISIBLE);
+            search(s.toString());
+        }
+    }
+
+    private LocalPagerAdapter mSearchPagerAdapter;
+
+    public void search(String word) {
+        if (mSearchPagerAdapter == null) {
+            mSearchPagerAdapter = new LocalPagerAdapter(getChildFragmentManager(), word);
+            mViewPager.setAdapter(mSearchPagerAdapter);
+        } else {
+            mSearchPagerAdapter.setWord(word);
+        }
+    }
+
+
+    @OnClick(R.id.iv_back)
+    public void back() {
+        getFragmentManager()
+                .popBackStack(getClass().getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    @OnClick(R.id.id_clear)
+    public void clear(View v) {
+        if (v.isShown()) {
+            etWord.setText(null);
+        }
+    }
+
+}

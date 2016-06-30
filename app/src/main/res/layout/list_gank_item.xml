@@ -9,53 +9,67 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_desc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="2"
-            android:textColor="@color/textColorPrimary"
-            tools:text="Electron 辅助工具，帮助你快速构建 Electron App"
-            />
+        <ImageView
+            android:id="@+id/iv_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginRight="8dp"
+            android:visibility="gone"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@mipmap/ic_access_time_black_18dp"/>
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tv_published_time"
-                android:layout_width="0dp"
+                android:id="@+id/tv_desc"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
-                android:layout_weight="1"
-                android:maxLines="1"
-                android:text="2015-05-23"
-                android:textColor="@color/textColorSecondary"
-                android:textSize="13sp"/>
+                android:maxLines="2"
+                android:textColor="@color/textColorPrimary"
+                tools:text="Electron 辅助工具，帮助你快速构建 Electron App"
+                />
 
-            <TextView
-                android:id="@+id/tv_who"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
-                android:layout_weight="1"
-                android:gravity="right|center_vertical"
-                android:maxLines="1"
-                android:text="代码家"
-                android:textColor="@color/textColorSecondary"
-                android:textSize="13sp"/>
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@mipmap/ic_access_time_black_18dp"/>
+
+                <TextView
+                    android:id="@+id/tv_published_time"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
+                    android:maxLines="1"
+                    android:text="2015-05-23"
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="13sp"/>
+
+                <TextView
+                    android:id="@+id/tv_who"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="4dp"
+                    android:layout_weight="1"
+                    android:gravity="right|center_vertical"
+                    android:maxLines="1"
+                    android:text="代码家"
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="13sp"/>
+            </LinearLayout>
+
         </LinearLayout>
-
     </LinearLayout>
 </android.support.v7.widget.CardView>

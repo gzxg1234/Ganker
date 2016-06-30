@@ -9,16 +9,25 @@ import android.widget.Toast;
 public class ToastUtil {
 
     private static Context sContext;
+    private static Toast mToast;
 
     public static void init(Context context) {
         sContext = context.getApplicationContext();
     }
 
     public static void shortShow(String msg) {
-        Toast.makeText(sContext, msg, Toast.LENGTH_SHORT).show();
+        show(msg, Toast.LENGTH_SHORT);
+    }
+
+    public static void show(String msg, int length) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+        mToast = Toast.makeText(sContext, msg, length);
+        mToast.show();
     }
 
     public static void longShow(String msg) {
-        Toast.makeText(sContext, msg, Toast.LENGTH_LONG).show();
+        show(msg, Toast.LENGTH_LONG);
     }
 }

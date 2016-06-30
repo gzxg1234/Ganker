@@ -28,7 +28,6 @@ public abstract class BaseFragment extends Fragment {
     }
 
     public void initView(View root, Bundle savedInstanceState) {
-
     }
 
     public abstract int getLayoutId();

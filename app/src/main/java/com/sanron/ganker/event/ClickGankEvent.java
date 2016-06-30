@@ -1,6 +1,6 @@
 package com.sanron.ganker.event;
 
-import com.sanron.ganker.model.entity.Gank;
+import com.sanron.ganker.data.entity.Gank;
 
 /**
  * Created by sanron on 16-6-28.
