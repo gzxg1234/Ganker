@@ -61,7 +61,7 @@ public class GankerRetrofit {
             cacheFile.mkdirs();
         }
         OkHttpClient httpClient = new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
+                .connectTimeout(10, TimeUnit.SECONDS)
                 .cache(new Cache(cacheFile, CACHE_MAX_SIZE))
                 .readTimeout(30, TimeUnit.SECONDS)
                 .addInterceptor(CACHE_INTERCEPTOR)

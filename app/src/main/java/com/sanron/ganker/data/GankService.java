@@ -5,7 +5,6 @@ import com.sanron.ganker.data.entity.HistoryDates;
 import com.sanron.ganker.data.entity.SearchData;
 
 import retrofit2.http.GET;
-import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import rx.Observable;
 
@@ -25,7 +24,6 @@ public interface GankService {
      * @param page     页码
      * @return
      */
-    @Headers({"Cache-Control:"})
     @GET("search/query/{search}/category/{category}/count/{count}/page/{page}")
     Observable<SearchData> search(@Path("search") String search, @Path("category") String category,
                                   @Path("count") int count, @Path("page") int page);

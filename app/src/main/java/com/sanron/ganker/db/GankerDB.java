@@ -34,7 +34,6 @@ public class GankerDB extends SQLiteOpenHelper {
         String sql = "create table " + CollectionGank.TABLE_NAME + "(" +
                 CollectionGank.COLUMN_ID + " integer primary key," +
                 CollectionGank.COLUMN_ADD_TIME + " integer," +
-                CollectionGank.COLUMN_CREATE_TIME + " integer," +
                 CollectionGank.COLUMN_GANK_ID + " text," +
                 CollectionGank.COLUMN_WHO + " text," +
                 CollectionGank.COLUMN_DESC + " text," +
@@ -79,13 +78,12 @@ public class GankerDB extends SQLiteOpenHelper {
                     SQLiteDatabase db = getWritableDatabase();
                     ContentValues values = new ContentValues();
                     values.put(CollectionGank.COLUMN_ADD_TIME, System.currentTimeMillis());
-                    values.put(CollectionGank.COLUMN_CREATE_TIME, gank.createdAt.getTime());
-                    values.put(CollectionGank.COLUMN_DESC, gank.desc);
-                    values.put(CollectionGank.COLUMN_GANK_ID, gank.gankId);
-                    values.put(CollectionGank.COLUMN_TYPE, gank.type);
-                    values.put(CollectionGank.COLUMN_PUBLISH_TIME, gank.publishedAt.getTime());
-                    values.put(CollectionGank.COLUMN_URL, gank.url);
-                    values.put(CollectionGank.COLUMN_WHO, gank.who);
+                    values.put(CollectionGank.COLUMN_DESC, gank.getDesc());
+                    values.put(CollectionGank.COLUMN_GANK_ID, gank.getGankId());
+                    values.put(CollectionGank.COLUMN_TYPE, gank.getType());
+                    values.put(CollectionGank.COLUMN_PUBLISH_TIME, gank.getPublishedAt().getTime());
+                    values.put(CollectionGank.COLUMN_URL, gank.getUrl());
+                    values.put(CollectionGank.COLUMN_WHO, gank.getWho());
                     long id = db.insert(CollectionGank.TABLE_NAME, null, values);
                     subscriber.onNext(id);
                     subscriber.onCompleted();
@@ -150,13 +148,12 @@ public class GankerDB extends SQLiteOpenHelper {
         CollectionGank gank = new CollectionGank();
         gank.id = cursor.getLong(cursor.getColumnIndex(CollectionGank.COLUMN_ID));
         gank.addTime = cursor.getLong(cursor.getColumnIndex(CollectionGank.COLUMN_ADD_TIME));
-        gank.createdAt = new Date(cursor.getLong(cursor.getColumnIndex(CollectionGank.COLUMN_CREATE_TIME)));
-        gank.desc = cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_DESC));
-        gank.gankId = cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_GANK_ID));
-        gank.publishedAt = new Date(cursor.getLong(cursor.getColumnIndex(CollectionGank.COLUMN_PUBLISH_TIME)));
-        gank.type = cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_TYPE));
-        gank.who = cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_WHO));
-        gank.url = cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_URL));
+        gank.setDesc(cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_DESC)));
+        gank.setGankId(cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_GANK_ID)));
+        gank.setPublishedAt(new Date(cursor.getLong(cursor.getColumnIndex(CollectionGank.COLUMN_PUBLISH_TIME))));
+        gank.setType(cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_TYPE)));
+        gank.setWho(cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_WHO)));
+        gank.setUrl(cursor.getString(cursor.getColumnIndex(CollectionGank.COLUMN_URL)));
         return gank;
     }
 }

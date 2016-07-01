@@ -1,6 +1,8 @@
 package com.sanron.ganker.ui;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -8,9 +10,7 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -39,21 +40,24 @@ import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnTextChanged;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by sanron on 16-6-30.
  */
-public class SearchFragment extends BaseFragment implements TextWatcher, TextView.OnEditorActionListener {
+public class SearchFragment extends BaseFragment implements TextView.OnEditorActionListener {
 
     @BindView(R.id.et_word)
     EditText etWord;
@@ -67,7 +71,12 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
     View mViewSearchResult;
     @BindView(R.id.view_pager)
     ViewPager mViewPager;
+    @BindView(R.id.tab_layout)
+    TabLayout mTabLayout;
 
+    private PublishSubject<String> mTextChangeSubject = PublishSubject.create();
+    private InputMethodManager mInputManager;
+    private LocalPagerAdapter mSearchPagerAdapter;
     private HistoryAdapter mHistoryAdapter;
     private static final String[] PAGE_CATEGORIES = {Gank.CATEGORY_ANDROID,
             Gank.CATEGORY_IOS, Gank.CATEGORY_FRONT_END, Gank.CATEGORY_EXPAND};
@@ -84,11 +93,19 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
     @Override
     public void initView(View root, Bundle savedInstanceState) {
         super.initView(root, savedInstanceState);
+        mInputManager = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         mHistoryAdapter = new HistoryAdapter();
-        etWord.addTextChangedListener(this);
         etWord.setOnEditorActionListener(this);
         mListSearchHistory.setLayoutManager(new LinearLayoutManager(getContext()));
         mListSearchHistory.setAdapter(mHistoryAdapter);
+        mTextChangeSubject.debounce(500, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        search(s);
+                    }
+                });
         getHistory()
                 .subscribe(new Action1<List<String>>() {
                     @Override
@@ -176,16 +193,17 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
                                 }
                             });
                 }
+                mInputManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
             return true;
         }
         return false;
     }
 
-
     public class LocalPagerAdapter extends FragmentPagerAdapter {
 
         private String mWord;
+        //存储已经初始化的fragment
         private SparseArray<GankPagerFragment> mInitedFragment = new SparseArray<>();
 
         public LocalPagerAdapter(FragmentManager fm, String word) {
@@ -199,12 +217,14 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
             }
             mWord = word;
             for (int i = 0; i < mInitedFragment.size(); i++) {
-                mInitedFragment.get(i).setObservableCreator(getCreator(PAGE_CATEGORIES[i]));
+                //更新ObservableCreator
+                mInitedFragment.valueAt(i).setObservableCreator(getCreator(PAGE_CATEGORIES[i]));
             }
         }
 
         private GankPagerFragment.ObservableCreator getCreator(final String category) {
             return new GankPagerFragment.ObservableCreator() {
+
                 @Override
                 public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
                     return GankerRetrofit.get()
@@ -277,19 +297,23 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
             return TYPE_ITEM;
         }
 
+        private View createClearView() {
+            TextView tvClear = new TextView(getContext());
+            tvClear.setTextSize(15);
+            tvClear.setText("清除搜索记录");
+            final int padding = DimenTool.dpToPx(getContext(), 8);
+            tvClear.setPadding(padding, padding, padding, padding);
+            tvClear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            tvClear.setGravity(Gravity.CENTER);
+            tvClear.setTextColor(getResources().getColor(R.color.colorPrimary));
+            return tvClear;
+        }
+
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             if (viewType == TYPE_CLEAR) {
-                TextView tvClear = new TextView(getContext());
-                tvClear.setTextSize(15);
-                tvClear.setText("清除搜索记录");
-                final int padding = DimenTool.dpToPx(getContext(), 8);
-                tvClear.setPadding(padding, padding, padding, padding);
-                tvClear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
-                tvClear.setGravity(Gravity.CENTER);
-                tvClear.setTextColor(getResources().getColor(R.color.colorPrimary));
-                return new FooterHolder(tvClear);
+                return new FooterHolder(createClearView());
             } else {
                 View view = LayoutInflater.from(getContext()).inflate(R.layout.list_history_item, parent, false);
                 Holder holder = new Holder(view);
@@ -337,7 +361,8 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
                 ((Holder) holder).itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+                        mInputManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                        etWord.setText(mItems.get(position));
                     }
                 });
             }
@@ -377,17 +402,9 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
         }
     }
 
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-    }
 
-    @Override
+    @OnTextChanged(R.id.et_word)
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-    }
-
-    @Override
-    public void afterTextChanged(Editable s) {
         if (TextUtils.isEmpty(s)) {
             clear.setVisibility(View.INVISIBLE);
             mViewSearchResult.setVisibility(View.INVISIBLE);
@@ -396,16 +413,15 @@ public class SearchFragment extends BaseFragment implements TextWatcher, TextVie
             clear.setVisibility(View.VISIBLE);
             mViewSearchResult.setVisibility(View.VISIBLE);
             mListSearchHistory.setVisibility(View.INVISIBLE);
-            search(s.toString());
+            mTextChangeSubject.onNext(s.toString());
         }
     }
-
-    private LocalPagerAdapter mSearchPagerAdapter;
 
     public void search(String word) {
         if (mSearchPagerAdapter == null) {
             mSearchPagerAdapter = new LocalPagerAdapter(getChildFragmentManager(), word);
             mViewPager.setAdapter(mSearchPagerAdapter);
+            mTabLayout.setupWithViewPager(mViewPager);
         } else {
             mSearchPagerAdapter.setWord(word);
         }

@@ -111,20 +111,20 @@ public class GankWebActivity extends BaseActivity {
         mGank = (Gank) intent.getSerializableExtra(ARG_GANK);
 
         GankerDB gankerDB = ((Ganker) getApplication()).getDB();
-        mToolbar.setTitle(mGank.who);
+        mToolbar.setTitle(mGank.getWho());
         setSupportActionBar(mToolbar);
-        mTvDesc.setText(mGank.desc);
+        mTvDesc.setText(mGank.getDesc());
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-        mWebView.loadUrl(mGank.url);
+        mWebView.loadUrl(mGank.getUrl());
         mWebView.setWebChromeClient(new LocalWebChromeClient());
         mWebView.setWebViewClient(new LocalWebViewClient());
 
-        gankerDB.getCollectionByGankId(mGank.gankId)
+        gankerDB.getCollectionByGankId(mGank.getGankId())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<CollectionGank>() {
                     @Override

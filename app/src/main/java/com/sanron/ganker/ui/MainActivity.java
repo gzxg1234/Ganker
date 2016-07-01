@@ -127,7 +127,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
 
         @Override
         public Fragment getItem(final int position) {
-            GankPagerFragment.ObservableCreator observableCreator = new GankPagerFragment.ObservableCreator() {
+            return GankPagerFragment.newInstance(new GankPagerFragment.ObservableCreator() {
                 @Override
                 public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
                     return GankerRetrofit
@@ -141,8 +141,8 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
                                 }
                             });
                 }
-            };
-            return GankPagerFragment.newInstance(observableCreator);
+            });
+
         }
 
         @Override
@@ -171,8 +171,8 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
     private void addFragmentToFront(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
-                .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right,
-                        R.anim.slide_in_right, R.anim.slide_out_right)
+                .setCustomAnimations(R.anim.slide_in_down, R.anim.slide_out_down,
+                        R.anim.slide_in_down, R.anim.slide_out_down)
                 .add(R.id.front_fragment_contanier,
                         fragment,
                         fragment.getClass().getName())

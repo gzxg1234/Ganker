@@ -40,7 +40,8 @@ public class PullRecyclerView extends RecyclerView {
                         && (((PullAdapter) getAdapter()).isEnableLoad())
                         && !mIsLoading) {
                     int lastVisiblePosition = ((LinearLayoutManager) getLayoutManager()).findLastVisibleItemPosition();
-                    if (lastVisiblePosition + 1 == getAdapter().getItemCount()) {
+                    if (lastVisiblePosition != RecyclerView.NO_POSITION
+                            && lastVisiblePosition + 1 == getAdapter().getItemCount()) {
                         mOnLoadMoreListener.onLoad();
                         mIsLoading = true;
                     }
