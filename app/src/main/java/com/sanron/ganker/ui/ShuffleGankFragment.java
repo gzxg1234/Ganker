@@ -15,11 +15,12 @@ import com.sanron.ganker.data.GankService;
 import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.data.entity.GankData;
+import com.sanron.ganker.decoration.DividerItemDecoration;
+import com.sanron.ganker.ui.adapter.GankAdapter;
 import com.sanron.ganker.ui.base.BaseFragment;
-import com.sanron.ganker.util.DimenTool;
+import com.sanron.ganker.util.CommonUtil;
 import com.sanron.ganker.util.ToastUtil;
-import com.sanron.ganker.view.DividerItemDecoration;
-import com.sanron.ganker.view.PullRecyclerView;
+import com.sanron.ganker.widget.PullRecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,17 +42,10 @@ import rx.schedulers.Schedulers;
 public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener {
 
 
-    @BindView(R.id.toolbar)
-    Toolbar mToolbar;
-
-    @BindView(R.id.recycler_view)
-    PullRecyclerView mRecyclerView;
-
-    @BindView(R.id.refresh_layout)
-    SwipeRefreshLayout mSwipeRefreshLayout;
-
-    @BindView(R.id.fab_choice_category)
-    FloatingActionButton mFabChoice;
+    @BindView(R.id.toolbar) Toolbar mToolbar;
+    @BindView(R.id.recycler_view) PullRecyclerView mRecyclerView;
+    @BindView(R.id.refresh_layout) SwipeRefreshLayout mSwipeRefreshLayout;
+    @BindView(R.id.fab_choice_category) FloatingActionButton mFabChoice;
 
     private GankAdapter mGankAdapter;
     private Subscription mSubscription;
@@ -158,9 +152,9 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
 
         mGankAdapter = new GankAdapter(getContext());
         mGankAdapter.setShowCategoryIcon(true);
-        mGankAdapter.setEnableLoad(false);
+        mRecyclerView.setLoadEnable(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(DimenTool.dpToPx(getContext(), 4)));
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(CommonUtil.dpToPx(getContext(), 4)));
         mRecyclerView.setAdapter(mGankAdapter);
 
         initLoad();

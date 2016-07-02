@@ -28,7 +28,7 @@ import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.data.entity.SearchData;
 import com.sanron.ganker.ui.base.BaseFragment;
-import com.sanron.ganker.util.DimenTool;
+import com.sanron.ganker.util.CommonUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,20 +59,13 @@ import rx.subjects.PublishSubject;
  */
 public class SearchFragment extends BaseFragment implements TextView.OnEditorActionListener {
 
-    @BindView(R.id.et_word)
-    EditText etWord;
-    @BindView(R.id.iv_back)
-    View ivBack;
-    @BindView(R.id.id_clear)
-    View clear;
-    @BindView(R.id.list_search_history)
-    RecyclerView mListSearchHistory;
-    @BindView(R.id.view_search_result)
-    View mViewSearchResult;
-    @BindView(R.id.view_pager)
-    ViewPager mViewPager;
-    @BindView(R.id.tab_layout)
-    TabLayout mTabLayout;
+    @BindView(R.id.et_word) EditText etWord;
+    @BindView(R.id.iv_back) View ivBack;
+    @BindView(R.id.id_clear) View clear;
+    @BindView(R.id.list_search_history) RecyclerView mListSearchHistory;
+    @BindView(R.id.view_search_result) View mViewSearchResult;
+    @BindView(R.id.view_pager) ViewPager mViewPager;
+    @BindView(R.id.tab_layout) TabLayout mTabLayout;
 
     private PublishSubject<String> mTextChangeSubject = PublishSubject.create();
     private InputMethodManager mInputManager;
@@ -200,7 +193,30 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
         return false;
     }
 
-    public class LocalPagerAdapter extends FragmentPagerAdapter {
+    public static class LocalPagerAdapter extends FragmentPagerAdapter {
+
+        public static class SearchGankCreator extends GankPagerFragment.ObservableCreator {
+            private String category;
+            private String word;
+
+            public SearchGankCreator(String category, String word) {
+                this.category = category;
+                this.word = word;
+            }
+
+            @Override
+            public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
+                return GankerRetrofit.get()
+                        .getGankService()
+                        .search(word, category, pageSize, page)
+                        .map(new Func1<SearchData, List<? extends Gank>>() {
+                            @Override
+                            public List<? extends Gank> call(SearchData searchData) {
+                                return searchData.results;
+                            }
+                        });
+            }
+        }
 
         private String mWord;
         //存储已经初始化的fragment
@@ -218,32 +234,16 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
             mWord = word;
             for (int i = 0; i < mInitedFragment.size(); i++) {
                 //更新ObservableCreator
-                mInitedFragment.valueAt(i).setObservableCreator(getCreator(PAGE_CATEGORIES[i]));
+                mInitedFragment.valueAt(i).setObservableCreator(
+                        new SearchGankCreator(PAGE_CATEGORIES[i], mWord));
             }
         }
 
-        private GankPagerFragment.ObservableCreator getCreator(final String category) {
-            return new GankPagerFragment.ObservableCreator() {
-
-                @Override
-                public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
-                    return GankerRetrofit.get()
-                            .getGankService()
-                            .search(mWord, category, pageSize, page)
-                            .map(new Func1<SearchData, List<? extends Gank>>() {
-                                @Override
-                                public List<? extends Gank> call(SearchData searchData) {
-                                    return searchData.results;
-                                }
-                            });
-                }
-            };
-        }
 
         @Override
         public Fragment getItem(final int position) {
             GankPagerFragment gankPagerFragment = GankPagerFragment.newInstance(
-                    getCreator(PAGE_CATEGORIES[position]));
+                    new SearchGankCreator(PAGE_CATEGORIES[position], mWord));
             mInitedFragment.put(position, gankPagerFragment);
             return gankPagerFragment;
         }
@@ -301,7 +301,7 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
             TextView tvClear = new TextView(getContext());
             tvClear.setTextSize(15);
             tvClear.setText("清除搜索记录");
-            final int padding = DimenTool.dpToPx(getContext(), 8);
+            final int padding = CommonUtil.dpToPx(getContext(), 8);
             tvClear.setPadding(padding, padding, padding, padding);
             tvClear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));

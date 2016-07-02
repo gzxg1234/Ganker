@@ -1,14 +1,18 @@
 package com.sanron.ganker.ui;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -19,13 +23,16 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.data.entity.GankData;
 import com.sanron.ganker.ui.base.BaseActivity;
-import com.sanron.ganker.util.NetworkUtil;
+import com.sanron.ganker.util.CommonUtil;
+import com.sanron.ganker.util.PermissionUtil;
+import com.sanron.ganker.widget.PermissionDialog;
 
 import java.util.List;
 
@@ -35,37 +42,24 @@ import butterknife.OnClick;
 import rx.Observable;
 import rx.functions.Func1;
 
-public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClickListener {
+public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClickListener, NavigationView.OnNavigationItemSelectedListener {
 
 
-    @BindView(R.id.drawer_layout)
-    DrawerLayout mDrawerLayout;
+    @BindView(R.id.drawer_layout) DrawerLayout mDrawerLayout;
+    @BindView(R.id.appbar) AppBarLayout mAppBarLayout;
+    @BindView(R.id.toolbar) Toolbar mToolbar;
+    @BindView(R.id.tab_layout) TabLayout mTabLayout;
+    @BindView(R.id.view_pager) ViewPager mViewPager;
+    @BindView(R.id.view_network_none) View mNoneNetwork;
+    @BindView(R.id.btn_shuffle) FloatingActionButton mFabShuffle;
+    @BindView(R.id.navigation) NavigationView mNavigationView;
+    @BindView(R.id.root) ViewGroup mRoot;
 
-    @BindView(R.id.appbar)
-    AppBarLayout mAppBarLayout;
-
-    @BindView(R.id.toolbar)
-    Toolbar mToolbar;
-
-    @BindView(R.id.tab_layout)
-    TabLayout mTabLayout;
-
-    @BindView(R.id.view_pager)
-    ViewPager mViewPager;
-
-    @BindView(R.id.view_network_none)
-    View mNoneNetwork;
-
-    @BindView(R.id.btn_shuffle)
-    FloatingActionButton mFabShuffle;
-
-    private static final String[] PAGE_CATEGORIES = {Gank.CATEGORY_ANDROID,
-            Gank.CATEGORY_IOS, Gank.CATEGORY_FRONT_END, Gank.CATEGORY_EXPAND};
 
     private BroadcastReceiver mNetworkChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (NetworkUtil.isNetworkAvaialable(context)) {
+            if (CommonUtil.isNetworkAvaialable(context)) {
                 mNoneNetwork.setVisibility(View.GONE);
             } else {
                 mNoneNetwork.setVisibility(View.VISIBLE);
@@ -78,9 +72,12 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-        setPadding();
+        initView();
         registerReceiver(mNetworkChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        requestPermission();
+    }
+
+    private void initView() {
         mViewPager.setAdapter(new LocalPagerAdapter(getSupportFragmentManager()));
         mTabLayout.setupWithViewPager(mViewPager);
         setSupportActionBar(mToolbar);
@@ -90,23 +87,44 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
                 mDrawerLayout.openDrawer(Gravity.LEFT);
             }
         });
+        mNavigationView.setNavigationItemSelectedListener(this);
         mToolbar.setOnMenuItemClickListener(this);
     }
 
-    @OnClick(R.id.btn_shuffle)
-    public void shuffle() {
-        addFragmentToFront(ShuffleGankFragment.newInstance(PAGE_CATEGORIES[mViewPager.getCurrentItem()]));
-    }
-
-    private void setPadding() {
-        int insetTop = mSystemBarTintManager.getConfig().getPixelInsetTop(false);
-        int insetBottom = mSystemBarTintManager.getConfig().getPixelInsetBottom();
-        for (int i = 0; i < mDrawerLayout.getChildCount(); i++) {
-            View v = mDrawerLayout.getChildAt(i);
-            v.setPadding(v.getPaddingLeft(), v.getPaddingTop() + insetTop,
-                    v.getPaddingRight(), v.getPaddingBottom() + insetBottom);
+    private void requestPermission() {
+        List<String> deniedPermissions = PermissionUtil.getDeniedPermissions(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        for (final String p : deniedPermissions) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, p)) {
+                String alert = null;
+                if (Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(p)) {
+                    alert = "应用缓存网络资源,节省网络流量,需要授予以下权限";
+                }
+                if (Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(p)) {
+                    new PermissionDialog(this)
+                            .setMessage(alert)
+                            .setPermissions(deniedPermissions)
+                            .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialog) {
+                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{p}, 0);
+                                }
+                            })
+                            .show();
+                }
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{p}, 0);
+            }
         }
     }
+
+    @OnClick(R.id.btn_shuffle)
+    public void onShuffle() {
+        addFragmentToFront(
+                ShuffleGankFragment.newInstance(
+                        LocalPagerAdapter.CATEGORIES[mViewPager.getCurrentItem()]));
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -119,43 +137,37 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
         return super.onOptionsItemSelected(item);
     }
 
-    public class LocalPagerAdapter extends FragmentPagerAdapter {
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_meizhi: {
+                addFragmentToFront(MeizhiFragment.newInstance());
+            }
+            break;
 
-        public LocalPagerAdapter(FragmentManager fm) {
-            super(fm);
+            case R.id.menu_history: {
+
+            }
+            break;
+
+            case R.id.menu_collections: {
+
+            }
+            break;
+
+            case R.id.menu_feedback: {
+
+            }
+            break;
+
+            case R.id.menu_setting: {
+
+            }
+            break;
         }
-
-        @Override
-        public Fragment getItem(final int position) {
-            return GankPagerFragment.newInstance(new GankPagerFragment.ObservableCreator() {
-                @Override
-                public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
-                    return GankerRetrofit
-                            .get()
-                            .getGankService()
-                            .getByCategory(PAGE_CATEGORIES[position], pageSize, page)
-                            .map(new Func1<GankData, List<? extends Gank>>() {
-                                @Override
-                                public List<? extends Gank> call(GankData gankData) {
-                                    return gankData.results;
-                                }
-                            });
-                }
-            });
-
-        }
-
-        @Override
-        public int getCount() {
-            return PAGE_CATEGORIES.length;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return PAGE_CATEGORIES[position];
-        }
+        mDrawerLayout.closeDrawer(Gravity.LEFT);
+        return true;
     }
-
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
@@ -173,7 +185,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
                 .beginTransaction()
                 .setCustomAnimations(R.anim.slide_in_down, R.anim.slide_out_down,
                         R.anim.slide_in_down, R.anim.slide_out_down)
-                .add(R.id.front_fragment_contanier,
+                .add(R.id.root,
                         fragment,
                         fragment.getClass().getName())
                 .addToBackStack(fragment.getClass().getName())
@@ -194,4 +206,53 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
             super.onBackPressed();
         }
     }
+
+
+    public static class LocalPagerAdapter extends FragmentPagerAdapter {
+
+        public static final String[] CATEGORIES = {Gank.CATEGORY_ANDROID,
+                Gank.CATEGORY_IOS, Gank.CATEGORY_FRONT_END, Gank.CATEGORY_EXPAND};
+
+        public static class CategoryGankCreator extends GankPagerFragment.ObservableCreator {
+            private String category;
+
+            public CategoryGankCreator(String category) {
+                this.category = category;
+            }
+
+            @Override
+            public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
+                return GankerRetrofit
+                        .get()
+                        .getGankService()
+                        .getByCategory(category, pageSize, page)
+                        .map(new Func1<GankData, List<? extends Gank>>() {
+                            @Override
+                            public List<? extends Gank> call(GankData gankData) {
+                                return gankData.results;
+                            }
+                        });
+            }
+        }
+
+        public LocalPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(final int position) {
+            return GankPagerFragment.newInstance(new CategoryGankCreator(CATEGORIES[position]));
+        }
+
+        @Override
+        public int getCount() {
+            return CATEGORIES.length;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return CATEGORIES[position];
+        }
+    }
+
 }

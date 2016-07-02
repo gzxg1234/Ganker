@@ -9,6 +9,8 @@ import android.view.WindowManager;
 import com.readystatesoftware.systembartint.SystemBarTintManager;
 import com.sanron.ganker.R;
 
+import java.util.List;
+
 /**
  * Created by sanron on 16-6-29.
  */
@@ -30,4 +32,5 @@ public class BaseActivity extends AppCompatActivity {
         mSystemBarTintManager.setNavigationBarTintEnabled(true);
         mSystemBarTintManager.setTintColor(getResources().getColor(R.color.colorPrimary));
     }
+
 }

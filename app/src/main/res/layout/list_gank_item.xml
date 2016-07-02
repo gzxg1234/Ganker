@@ -29,7 +29,6 @@
                 android:id="@+id/tv_desc"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLines="2"
                 android:textColor="@color/textColorPrimary"
                 tools:text="Electron 辅助工具，帮助你快速构建 Electron App"
                 />

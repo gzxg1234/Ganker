@@ -1,4 +1,4 @@
-package com.sanron.ganker.ui;
+package com.sanron.ganker.ui.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -10,7 +10,8 @@ import android.widget.TextView;
 
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
-import com.sanron.ganker.view.PullRecyclerView;
+import com.sanron.ganker.ui.GankWebActivity;
+import com.sanron.ganker.widget.PullRecyclerView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

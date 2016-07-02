@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'android-apt'
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
     defaultConfig {
         applicationId "com.sanron.ganker"
-        minSdkVersion 15
+        minSdkVersion 14
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"

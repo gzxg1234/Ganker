@@ -36,20 +36,11 @@ import rx.functions.Action1;
  */
 public class GankWebActivity extends BaseActivity {
 
-    @BindView(R.id.toolbar)
-    Toolbar mToolbar;
-
-    @BindView(R.id.webview)
-    WebView mWebView;
-
-    @BindView(R.id.progress_bar)
-    ProgressBar mProgressBar;
-
-    @BindView(R.id.tv_desc)
-    TextView mTvDesc;
-
-    @BindView(R.id.iv_favorite)
-    ImageView mIvFavorite;
+    @BindView(R.id.toolbar) Toolbar mToolbar;
+    @BindView(R.id.webview) WebView mWebView;
+    @BindView(R.id.progress_bar) ProgressBar mProgressBar;
+    @BindView(R.id.tv_desc) TextView mTvDesc;
+    @BindView(R.id.iv_favorite) ImageView mIvFavorite;
 
     private Gank mGank;
     private Toast mToast;
@@ -71,7 +62,6 @@ public class GankWebActivity extends BaseActivity {
         @Override
         public void onProgressChanged(WebView view, int newProgress) {
             super.onProgressChanged(view, newProgress);
-            System.out.println(newProgress);
             mProgressBar.setProgress(newProgress);
         }
     }
