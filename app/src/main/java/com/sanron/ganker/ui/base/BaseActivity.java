@@ -8,8 +8,7 @@ import android.view.WindowManager;
 
 import com.readystatesoftware.systembartint.SystemBarTintManager;
 import com.sanron.ganker.R;
-
-import java.util.List;
+import com.umeng.analytics.MobclickAgent;
 
 /**
  * Created by sanron on 16-6-29.
@@ -33,4 +32,15 @@ public class BaseActivity extends AppCompatActivity {
         mSystemBarTintManager.setTintColor(getResources().getColor(R.color.colorPrimary));
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MobclickAgent.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MobclickAgent.onPause(this);
+    }
 }

@@ -39,7 +39,7 @@ public class GankerRetrofit {
         @Override
         public Response intercept(Chain chain) throws IOException {
             Response response = chain.proceed(chain.request());
-            if (CommonUtil.isNetworkAvaialable(Ganker.getAppContext())) {
+            if (CommonUtil.isNetworkAvaialable(Ganker.get())) {
                 String control = response.header("Cache-Control");
                 if (control == null) {
                     return response.newBuilder()
@@ -55,8 +55,8 @@ public class GankerRetrofit {
         }
     };
 
-    public GankerRetrofit() {
-        File cacheFile = new File(Ganker.getAppContext().getCacheDir(), "http_cache");
+    private GankerRetrofit() {
+        File cacheFile = new File(Ganker.get().getCacheDir(), "http_cache");
         if (!cacheFile.exists()) {
             cacheFile.mkdirs();
         }

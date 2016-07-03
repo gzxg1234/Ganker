@@ -97,10 +97,11 @@ public class GankWebActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gank_webview);
         ButterKnife.bind(this);
-        Intent intent = getIntent();
-        mGank = (Gank) intent.getSerializableExtra(ARG_GANK);
+        initData();
+        initView();
+    }
 
-        GankerDB gankerDB = ((Ganker) getApplication()).getDB();
+    private void initView() {
         mToolbar.setTitle(mGank.getWho());
         setSupportActionBar(mToolbar);
         mTvDesc.setText(mGank.getDesc());
@@ -114,6 +115,7 @@ public class GankWebActivity extends BaseActivity {
         mWebView.setWebChromeClient(new LocalWebChromeClient());
         mWebView.setWebViewClient(new LocalWebViewClient());
 
+        GankerDB gankerDB = Ganker.get().getDB();
         gankerDB.getCollectionByGankId(mGank.getGankId())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<CollectionGank>() {
@@ -127,6 +129,12 @@ public class GankWebActivity extends BaseActivity {
                         }
                     }
                 });
+    }
+
+    private void initData() {
+        Intent intent = getIntent();
+        mGank = (Gank) intent.getSerializableExtra(ARG_GANK);
+
     }
 
     public void showToast(String msg) {

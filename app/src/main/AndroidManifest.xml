@@ -6,6 +6,15 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <!-- 蓝牙分享所需的权限 -->
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
     <application
         android:name=".Ganker"
@@ -13,8 +22,14 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme.NoTitle">
+        android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="UMENG_APPKEY"
+            android:value="5778eb92e0f55a9990003fe6"/>
+        <meta-data
+            android:name="UMENG_CHANNEL"
+            android:value="Android"/>
         <meta-data
             android:name="com.sanron.ganker.GankerGlideModule"
             android:value="GlideModule"/>
@@ -29,7 +44,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.GankWebActivity"/>
-        <activity android:name=".ui.MeizhiPicActivity"/>
+        <activity
+            android:name=".ui.MeizhiDetailActivity"
+            android:theme="@style/AppTheme.MeizhiDetail"/>
+        <activity
+            android:name=".ui.MeizhiActivity"/>
+
     </application>
 
 </manifest>

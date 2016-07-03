@@ -42,6 +42,8 @@ public class ImageUtil {
                                     subscriber.onNext(save.getAbsolutePath());
                                 }
                                 fos.close();
+                            } else {
+                                subscriber.onNext(null);
                             }
                         } catch (Exception e) {
                             subscriber.onError(e);

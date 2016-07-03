@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Ganker.iml" filepath="$PROJECT_DIR$/Ganker.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/salvage/mylibrary.iml" filepath="$PROJECT_DIR$/salvage/mylibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/salvage/salvage.iml" filepath="$PROJECT_DIR$/salvage/salvage.iml" />
     </modules>
   </component>
 </project>

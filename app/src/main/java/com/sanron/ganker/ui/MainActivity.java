@@ -141,7 +141,8 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
     public boolean onNavigationItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_meizhi: {
-                addFragmentToFront(MeizhiFragment.newInstance());
+                Intent intent = new Intent(this, MeizhiActivity.class);
+                startActivity(intent);
             }
             break;
 

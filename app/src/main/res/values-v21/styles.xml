@@ -1,16 +1,13 @@
 <resources>
 
-    <!-- BaseData application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+    <style name="AppTheme.MeizhiDetail">
         <item name="android:windowContentTransitions">true</item>
-        <!-- 指定shared element transitions -->
         <item name="android:windowSharedElementEnterTransition">
-            @transition/change_image_transform</item>
+            @transition/meizhi_img_share_transition
+        </item>
         <item name="android:windowSharedElementExitTransition">
-            @transition/change_image_transform</item>
+            @transition/meizhi_img_share_transition
+        </item>
     </style>
+
 </resources>

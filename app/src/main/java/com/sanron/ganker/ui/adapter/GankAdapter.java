@@ -148,9 +148,6 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
 
         public void setGank(Gank gank) {
             this.gank = gank;
-            if(gank.getPublishedAt()==null){
-                System.out.println();
-            }
             tvPublishedTime.setText(getTimeText(gank.getPublishedAt()));
             tvDesc.setText(gank.getDesc());
             tvWho.setText(gank.getWho());

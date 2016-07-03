@@ -52,6 +52,9 @@ public class MeizhiAdapter extends PullRecyclerView.PullAdapter<MeizhiAdapter.Ho
         }
     }
 
+    public List<Gank> getData() {
+        return mItems;
+    }
 
     @Override
     public Holder onCreateRealViewHolder(ViewGroup parent, int viewType) {
@@ -95,8 +98,8 @@ public class MeizhiAdapter extends PullRecyclerView.PullAdapter<MeizhiAdapter.Ho
     public class Holder extends RecyclerView.ViewHolder {
 
         @BindView(R.id.iv_img)
-        ImageView ivImg;
-        Gank gank;
+        public ImageView ivImg;
+        public Gank gank;
 
         public Holder(View itemView) {
             super(itemView);

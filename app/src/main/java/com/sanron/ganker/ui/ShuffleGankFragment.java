@@ -49,7 +49,11 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
 
     private GankAdapter mGankAdapter;
     private Subscription mSubscription;
-    private String category;
+    private String mCategory;
+
+    public static final String ARG_CATEGORY = "category";
+    private static int REQUEST_CUNNT = 20;//请求数量
+    private static int EACH_COUNT = REQUEST_CUNNT / 4;//都看看时每个分类获取数量
     private static final String[] CATEGORIES = new String[]{
             "都看看",
             Gank.CATEGORY_ANDROID,
@@ -57,9 +61,6 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
             Gank.CATEGORY_FRONT_END,
             Gank.CATEGORY_EXPAND
     };
-    private static int REQUEST_CUNNT = 20;//请求数量
-    private static int EACH_COUNT = REQUEST_CUNNT / 4;//都看看时每个分类获取数量
-    public static final String ARG_CATEGORY = "category";
 
     public static ShuffleGankFragment newInstance(String category) {
         Bundle args = new Bundle();
@@ -78,7 +79,7 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle args = getArguments();
-        category = args.getString(ARG_CATEGORY, "");
+        mCategory = args.getString(ARG_CATEGORY, "");
     }
 
     Observable.Transformer<GankData, List<Gank>> gankTransformer = new Observable.Transformer<GankData, List<Gank>>() {
@@ -97,10 +98,10 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
     };
 
     @OnClick(R.id.fab_choice_category)
-    public void choiceCategory() {
+    public void onChoiceClick() {
         int checkedItem = 0;
         for (int i = 0; i < CATEGORIES.length; i++) {
-            if (CATEGORIES[i].equals(category)) {
+            if (CATEGORIES[i].equals(mCategory)) {
                 checkedItem = i;
             }
         }
@@ -117,10 +118,10 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (CATEGORIES[select[0]].equals(category)) {
+                        if (CATEGORIES[select[0]].equals(mCategory)) {
                             return;
                         } else {
-                            category = CATEGORIES[select[0]];
+                            mCategory = CATEGORIES[select[0]];
                             initLoad();
                         }
                         dialog.dismiss();
@@ -184,7 +185,7 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
 
         Observable<GankData> observable;
         GankService gankService = GankerRetrofit.get().getGankService();
-        switch (category) {
+        switch (mCategory) {
             case Gank.CATEGORY_ANDROID: {
                 observable = gankService.shuffleGank(Gank.CATEGORY_ANDROID, REQUEST_CUNNT);
             }
@@ -234,7 +235,6 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
         }
         mSubscription = observable
                 .compose(gankTransformer)
-                .defaultIfEmpty(new ArrayList<Gank>())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<List<Gank>>() {

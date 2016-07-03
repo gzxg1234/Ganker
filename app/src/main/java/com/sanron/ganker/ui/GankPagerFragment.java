@@ -22,8 +22,8 @@ import java.util.List;
 import butterknife.BindView;
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.internal.util.SubscriptionList;
 import rx.schedulers.Schedulers;
 
 /**
@@ -36,13 +36,13 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
 
     private GankAdapter mGankAdapter;
     private List<Gank> mGanks;
-    private int page;
-    private boolean isLoaded;
-    private boolean isInited;
+    private int mPage;
+    private boolean mIsLoaded;
+    private boolean mIsInited;
 
     private static final int PAGE_SIZE = 20;
     public static final String ARG_CREATOR = "creator";
-    private Subscription mSubscription;
+    private SubscriptionList mSubscriptionList = new SubscriptionList();
     private ObservableCreator mObservableCreator;
 
     /**
@@ -72,23 +72,23 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
         mRecyclerView.addItemDecoration(new DividerItemDecoration(CommonUtil.dpToPx(getContext(), 4)));
         mRecyclerView.setAdapter(mGankAdapter);
         mRecyclerView.setOnLoadMoreListener(this);
-        if (!isLoaded && getUserVisibleHint()) {
+        if (!mIsLoaded && getUserVisibleHint()) {
             firstLoad();
         }
-        isInited = true;
+        mIsInited = true;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        isInited = false;
+        mIsInited = false;
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        if (isInited
-                && !isLoaded) {
+        if (mIsInited
+                && !mIsLoaded) {
             firstLoad();
         }
     }
@@ -99,7 +99,7 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
             public void run() {
                 mSwipeRefreshLayout.setRefreshing(true);
                 onRefresh();
-                isLoaded = true;
+                mIsLoaded = true;
             }
         });
     }
@@ -119,15 +119,14 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mSubscription != null
-                && mSubscription.isUnsubscribed()) {
-            mSubscription.unsubscribe();
+        if (mSubscriptionList.isUnsubscribed()) {
+            mSubscriptionList.unsubscribe();
         }
     }
 
     @Override
     public void onRefresh() {
-        page = 0;
+        mPage = 0;
         mGanks = null;
         mRecyclerView.setLoadEnable(true);
         onLoad();
@@ -135,53 +134,56 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
 
     public void setObservableCreator(ObservableCreator observableCreator) {
         mObservableCreator = observableCreator;
-        page = 0;
+        mPage = 0;
         mGanks = null;
         mGankAdapter.setData(null);
         mRecyclerView.setLoadEnable(true);
-        isLoaded = false;
+        mIsLoaded = false;
         if (getUserVisibleHint()
-                && isInited) {
+                && mIsInited) {
             firstLoad();
         }
     }
 
+
     @Override
     public void onLoad() {
+        mSubscriptionList.add(
+                mObservableCreator
+                        .onLoad(PAGE_SIZE, mPage + 1)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new LocalSubscriber()));
+    }
 
-        mSubscription = mObservableCreator
-                .onLoad(PAGE_SIZE, page + 1)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<List<? extends Gank>>() {
-                    @Override
-                    public void onCompleted() {
-                        mSwipeRefreshLayout.setRefreshing(false);
-                        mRecyclerView.setLoading(false);
-                    }
+    private class LocalSubscriber extends Subscriber<List<? extends Gank>> {
+        @Override
+        public void onCompleted() {
+            mSwipeRefreshLayout.setRefreshing(false);
+            mRecyclerView.setLoading(false);
+        }
 
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                        mSwipeRefreshLayout.setRefreshing(false);
-                        mRecyclerView.setLoading(false);
-                        ToastUtil.shortShow("获取数据失败");
-                    }
+        @Override
+        public void onError(Throwable e) {
+            e.printStackTrace();
+            mSwipeRefreshLayout.setRefreshing(false);
+            mRecyclerView.setLoading(false);
+            ToastUtil.shortShow("获取数据失败");
+        }
 
-                    @Override
-                    public void onNext(List<? extends Gank> ganks) {
-                        if (mGanks == null) {
-                            mGanks = new ArrayList<>();
-                        }
-                        mGanks.addAll(ganks);
-                        mGankAdapter.setData(mGanks);
-                        if (ganks.size() < PAGE_SIZE) {
-                            //没有更多
-                            mRecyclerView.setLoadEnable(false);
-                        }
-                        page++;
-                    }
-                });
+        @Override
+        public void onNext(List<? extends Gank> ganks) {
+            if (mGanks == null) {
+                mGanks = new ArrayList<>();
+            }
+            mGanks.addAll(ganks);
+            mGankAdapter.setData(mGanks);
+            if (ganks.size() < PAGE_SIZE) {
+                //没有更多
+                mRecyclerView.setLoadEnable(false);
+            }
+            mPage++;
+        }
     }
 
 }

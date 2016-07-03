@@ -23,6 +23,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.sanron.ganker.Ganker;
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
@@ -30,14 +31,6 @@ import com.sanron.ganker.data.entity.SearchData;
 import com.sanron.ganker.ui.base.BaseFragment;
 import com.sanron.ganker.util.CommonUtil;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -47,11 +40,9 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
 import rx.Observable;
-import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
-import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 /**
@@ -99,7 +90,7 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
                         search(s);
                     }
                 });
-        getHistory()
+        Ganker.get().getSearchHistory()
                 .subscribe(new Action1<List<String>>() {
                     @Override
                     public void call(List<String> strings) {
@@ -108,63 +99,6 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
                 });
     }
 
-    public Observable<List<String>> getHistory() {
-        return Observable
-                .create(new Observable.OnSubscribe<List<String>>() {
-                    @Override
-                    public void call(Subscriber<? super List<String>> subscriber) {
-                        List<String> history = new ArrayList<>();
-                        File file = new File(getContext().getFilesDir(), "search_history");
-                        if (file.exists()) {
-                            try {
-                                FileInputStream fis = new FileInputStream(file);
-                                ObjectInputStream ois = new ObjectInputStream(fis);
-                                history = (List<String>) ois.readObject();
-                            } catch (FileNotFoundException e) {
-                                e.printStackTrace();
-                            } catch (StreamCorruptedException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        subscriber.onNext(history);
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-    }
-
-    public Observable<Boolean> saveHistory(final List<String> items) {
-        return Observable
-                .create(new Observable.OnSubscribe<Boolean>() {
-                    @Override
-                    public void call(Subscriber<? super Boolean> subscriber) {
-                        File file = new File(getContext().getFilesDir(), "search_history");
-                        try {
-                            FileOutputStream fos = new FileOutputStream(file);
-                            ObjectOutputStream oos = new ObjectOutputStream(fos);
-                            oos.writeObject(items);
-                            oos.flush();
-                            oos.close();
-                            fos.close();
-                            subscriber.onNext(true);
-                            return;
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (StreamCorruptedException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        subscriber.onNext(false);
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-    }
 
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -176,7 +110,7 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
                     //保存搜索历史
                     List<String> items = new ArrayList<>(mHistoryAdapter.getData());
                     items.add(word);
-                    saveHistory(items)
+                    Ganker.get().saveSearchHistory(items)
                             .subscribe(new Action1<Boolean>() {
                                 @Override
                                 public void call(Boolean aBoolean) {
@@ -192,6 +126,46 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
         }
         return false;
     }
+
+
+    @OnTextChanged(R.id.et_word)
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        if (TextUtils.isEmpty(s)) {
+            clear.setVisibility(View.INVISIBLE);
+            mViewSearchResult.setVisibility(View.INVISIBLE);
+            mListSearchHistory.setVisibility(View.VISIBLE);
+        } else {
+            clear.setVisibility(View.VISIBLE);
+            mViewSearchResult.setVisibility(View.VISIBLE);
+            mListSearchHistory.setVisibility(View.INVISIBLE);
+            mTextChangeSubject.onNext(s.toString());
+        }
+    }
+
+    public void search(String word) {
+        if (mSearchPagerAdapter == null) {
+            mSearchPagerAdapter = new LocalPagerAdapter(getChildFragmentManager(), word);
+            mViewPager.setAdapter(mSearchPagerAdapter);
+            mTabLayout.setupWithViewPager(mViewPager);
+        } else {
+            mSearchPagerAdapter.setWord(word);
+        }
+    }
+
+
+    @OnClick(R.id.iv_back)
+    public void onBack() {
+        getFragmentManager()
+                .popBackStack(getClass().getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    @OnClick(R.id.id_clear)
+    public void onClear(View v) {
+        if (v.isShown()) {
+            etWord.setText(null);
+        }
+    }
+
 
     public static class LocalPagerAdapter extends FragmentPagerAdapter {
 
@@ -286,12 +260,13 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
 
         public void remove(int position) {
             mItems.remove(position);
-            notifyItemRemoved(position);
+            notifyItemRangeRemoved(position, mItems.size() == 0 ? 2 : 1);
         }
 
         @Override
         public int getItemViewType(int position) {
-            if (position == getItemCount() - 1) {
+            if (position > 0
+                    && position == getItemCount() - 1) {
                 return TYPE_CLEAR;
             }
             return TYPE_ITEM;
@@ -329,7 +304,8 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
                 holder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        saveHistory(new ArrayList<String>())
+                        Ganker.get()
+                                .saveSearchHistory(new ArrayList<String>())
                                 .subscribe(new Action1<Boolean>() {
                                     @Override
                                     public void call(Boolean aBoolean) {
@@ -347,7 +323,8 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
                     public void onClick(View v) {
                         List<String> items = new ArrayList<>(mHistoryAdapter.getData());
                         items.remove(position);
-                        saveHistory(items)
+                        Ganker.get()
+                                .saveSearchHistory(items)
                                 .subscribe(new Action1<Boolean>() {
                                     @Override
                                     public void call(Boolean aBoolean) {
@@ -401,44 +378,4 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
             }
         }
     }
-
-
-    @OnTextChanged(R.id.et_word)
-    public void onTextChanged(CharSequence s, int start, int before, int count) {
-        if (TextUtils.isEmpty(s)) {
-            clear.setVisibility(View.INVISIBLE);
-            mViewSearchResult.setVisibility(View.INVISIBLE);
-            mListSearchHistory.setVisibility(View.VISIBLE);
-        } else {
-            clear.setVisibility(View.VISIBLE);
-            mViewSearchResult.setVisibility(View.VISIBLE);
-            mListSearchHistory.setVisibility(View.INVISIBLE);
-            mTextChangeSubject.onNext(s.toString());
-        }
-    }
-
-    public void search(String word) {
-        if (mSearchPagerAdapter == null) {
-            mSearchPagerAdapter = new LocalPagerAdapter(getChildFragmentManager(), word);
-            mViewPager.setAdapter(mSearchPagerAdapter);
-            mTabLayout.setupWithViewPager(mViewPager);
-        } else {
-            mSearchPagerAdapter.setWord(word);
-        }
-    }
-
-
-    @OnClick(R.id.iv_back)
-    public void back() {
-        getFragmentManager()
-                .popBackStack(getClass().getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
-    }
-
-    @OnClick(R.id.id_clear)
-    public void clear(View v) {
-        if (v.isShown()) {
-            etWord.setText(null);
-        }
-    }
-
 }

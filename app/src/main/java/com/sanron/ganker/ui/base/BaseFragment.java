@@ -7,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.umeng.analytics.MobclickAgent;
+
 import butterknife.ButterKnife;
 
 /**
@@ -25,6 +27,18 @@ public abstract class BaseFragment extends Fragment {
         }
         initView(root, savedInstanceState);
         return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        MobclickAgent.onPageStart(getClass().getSimpleName());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        MobclickAgent.onPageEnd(getClass().getSimpleName());
     }
 
     public void initView(View root, Bundle savedInstanceState) {
