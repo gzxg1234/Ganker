@@ -30,7 +30,7 @@ import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.data.entity.GankData;
 import com.sanron.ganker.ui.base.BaseActivity;
-import com.sanron.ganker.util.CommonUtil;
+import com.sanron.ganker.util.Common;
 import com.sanron.ganker.util.PermissionUtil;
 import com.sanron.ganker.widget.PermissionDialog;
 
@@ -59,7 +59,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
     private BroadcastReceiver mNetworkChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (CommonUtil.isNetworkAvaialable(context)) {
+            if (Common.isNetworkAvaialable(context)) {
                 mNoneNetwork.setVisibility(View.GONE);
             } else {
                 mNoneNetwork.setVisibility(View.VISIBLE);
@@ -147,7 +147,8 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
             break;
 
             case R.id.menu_history: {
-
+                Intent intent = new Intent(this, HistoryActivity.class);
+                startActivity(intent);
             }
             break;
 
@@ -166,7 +167,6 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
             }
             break;
         }
-        mDrawerLayout.closeDrawer(Gravity.LEFT);
         return true;
     }
 

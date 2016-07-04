@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,11 +16,11 @@ import com.sanron.ganker.data.GankService;
 import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.data.entity.GankData;
-import com.sanron.ganker.decoration.DividerItemDecoration;
 import com.sanron.ganker.ui.adapter.GankAdapter;
 import com.sanron.ganker.ui.base.BaseFragment;
-import com.sanron.ganker.util.CommonUtil;
+import com.sanron.ganker.util.Common;
 import com.sanron.ganker.util.ToastUtil;
+import com.sanron.ganker.widget.DividerItemDecoration;
 import com.sanron.ganker.widget.PullRecyclerView;
 
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import butterknife.BindView;
 import butterknife.OnClick;
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.functions.Func4;
@@ -48,7 +48,6 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
     @BindView(R.id.fab_choice_category) FloatingActionButton mFabChoice;
 
     private GankAdapter mGankAdapter;
-    private Subscription mSubscription;
     private String mCategory;
 
     public static final String ARG_CATEGORY = "category";
@@ -155,8 +154,16 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
         mGankAdapter.setShowCategoryIcon(true);
         mRecyclerView.setLoadEnable(false);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(CommonUtil.dpToPx(getContext(), 4)));
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(Common.dpToPx(getContext(), 4)));
         mRecyclerView.setAdapter(mGankAdapter);
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getFragmentManager()
+                        .popBackStackImmediate(ShuffleGankFragment.class.getName(),
+                                FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            }
+        });
 
         initLoad();
     }
@@ -171,14 +178,6 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
         });
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (mSubscription != null
-                && mSubscription.isUnsubscribed()) {
-            mSubscription.unsubscribe();
-        }
-    }
 
     @Override
     public void onRefresh() {
@@ -233,7 +232,7 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
             }
             break;
         }
-        mSubscription = observable
+        addSub(observable
                 .compose(gankTransformer)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -254,7 +253,7 @@ public class ShuffleGankFragment extends BaseFragment implements SwipeRefreshLay
                     public void onNext(List<Gank> ganks) {
                         mGankAdapter.setData(ganks);
                     }
-                });
+                }));
     }
 
 }

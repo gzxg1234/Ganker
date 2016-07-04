@@ -3,7 +3,7 @@ package com.sanron.ganker.data;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sanron.ganker.Ganker;
-import com.sanron.ganker.util.CommonUtil;
+import com.sanron.ganker.util.Common;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class GankerRetrofit {
         @Override
         public Response intercept(Chain chain) throws IOException {
             Response response = chain.proceed(chain.request());
-            if (CommonUtil.isNetworkAvaialable(Ganker.get())) {
+            if (Common.isNetworkAvaialable(Ganker.get())) {
                 String control = response.header("Cache-Control");
                 if (control == null) {
                     return response.newBuilder()

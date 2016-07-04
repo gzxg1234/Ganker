@@ -57,9 +57,6 @@ public class PullRecyclerView extends RecyclerView {
                         && lastVisiablePosition >= getAdapter().getItemCount() - 1
                         && mLoadEnable) {
                     setLoading(true);
-                    if (mOnLoadMoreListener != null) {
-                        mOnLoadMoreListener.onLoad();
-                    }
                 }
             }
         });
@@ -87,6 +84,9 @@ public class PullRecyclerView extends RecyclerView {
         if (adapter instanceof PullAdapter) {
             if (mIsLoading) {
                 adapter.notifyItemInserted(adapter.getItemCount());
+                if (mOnLoadMoreListener != null) {
+                    mOnLoadMoreListener.onLoad();
+                }
             } else {
                 adapter.notifyItemRemoved(adapter.getItemCount() - 1);
             }
@@ -105,7 +105,6 @@ public class PullRecyclerView extends RecyclerView {
     public interface OnLoadMoreListener {
         void onLoad();
     }
-
 
     public boolean isLoading() {
         return mIsLoading;

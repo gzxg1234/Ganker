@@ -1,4 +1,4 @@
-package com.sanron.ganker.decoration;
+package com.sanron.ganker.widget;
 
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;

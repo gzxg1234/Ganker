@@ -6,7 +6,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -22,25 +22,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.jakewharton.salvage.RecyclingPagerAdapter;
-import com.readystatesoftware.systembartint.SystemBarTintManager;
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.ui.base.BaseActivity;
+import com.sanron.ganker.util.Common;
 import com.sanron.ganker.util.ImageUtil;
 import com.sanron.ganker.util.PermissionUtil;
+import com.sanron.ganker.util.ShareUtil;
 import com.sanron.ganker.util.ToastUtil;
 import com.sanron.ganker.widget.PermissionDialog;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -62,7 +62,7 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
     @BindView(R.id.fab_save) FloatingActionButton mFabSave;
     @BindView(R.id.pager_img) ViewPager mViewPager;
 
-    private boolean mIsFullScreen;
+    private boolean mIsFullScreen = false;
     private Gank[] mGanks;
     private ImgPagerAdapter mPagerAdapter;
     private boolean mIsLoadedStartPic = false;
@@ -87,11 +87,12 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
         }
     };
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mSystemBarTintManager.setStatusBarTintEnabled(false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        }
         setContentView(R.layout.activity_meizhi_detail);
         ButterKnife.bind(this);
         setEnterSharedElementCallback(mSharedElementCallback);
@@ -110,16 +111,10 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
     }
 
     private void initView() {
-        SystemBarTintManager.SystemBarConfig systemBarConfig = mSystemBarTintManager.getConfig();
         setSupportActionBar(mToolbar);
-        mRoot.setPadding(
-                mRoot.getPaddingLeft(),
-                mRoot.getPaddingTop(),
-                mRoot.getPaddingRight() + systemBarConfig.getPixelInsetRight(),
-                mRoot.getPaddingBottom() + systemBarConfig.getPixelInsetBottom());
         mAppBarLayout.setPadding(
                 mAppBarLayout.getPaddingTop(),
-                mAppBarLayout.getPaddingTop() + systemBarConfig.getPixelInsetTop(false),
+                mAppBarLayout.getPaddingTop() + Common.getStatusBarHeight(this),
                 mAppBarLayout.getPaddingRight(),
                 mAppBarLayout.getPaddingBottom());
 
@@ -132,7 +127,7 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finishAfterTransition();
+                ActivityCompat.finishAfterTransition(MeizhiDetailActivity.this);
             }
         });
     }
@@ -180,40 +175,28 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
         }
     }
 
-    private String getFileName(String url) {
-        try {
-            String urlFile = new URL(url).getFile();
-            int index = urlFile.lastIndexOf('/');
-            index = (index == -1 ? 0 : index);
-            return urlFile.substring(index);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return String.valueOf(url.hashCode());
-    }
-
     private void save() {
-        Bitmap bmp = ((GlideBitmapDrawable) mCurrentImageView.getDrawable()).getBitmap();
-        ImageUtil.saveBitmap(bmp, getFileName(mGanks[mEndPosition].getUrl()))
+        ImageUtil.saveImg(this, mGanks[mEndPosition].getUrl())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<String>() {
                     @Override
                     public void call(String s) {
-                        if (s == null) {
-                            ToastUtil.longShow("保存失败");
-                        } else {
-                            ToastUtil.longShow("保存成功,保存路径" + s);
-                        }
+                        ToastUtil.longShow("保存成功,在" + s);
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        ToastUtil.shortShow("保存失败,请检查网络或者sd卡");
                     }
                 });
     }
 
 
-    private void fullScreen() {
-        mViewPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+    private void noFullScreen() {
         mAppBarLayout
                 .animate().cancel();
+        mViewPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         mAppBarLayout.setVisibility(View.VISIBLE);
         mAppBarLayout
                 .animate()
@@ -222,13 +205,10 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
                 .setListener(null)
                 .start();
         mFabSave.show();
-        mIsFullScreen = true;
+        mIsFullScreen = false;
     }
 
-    private void noFullScreen() {
-        if (Build.VERSION.SDK_INT >= 16) {
-            mViewPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
-        }
+    private void fullScreen() {
         mAppBarLayout
                 .animate().cancel();
         mAppBarLayout
@@ -239,11 +219,14 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mAppBarLayout.setVisibility(View.INVISIBLE);
+                        if (Build.VERSION.SDK_INT >= 16) {
+                            mViewPager.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+                        }
                     }
                 })
                 .start();
         mFabSave.hide();
-        mIsFullScreen = false;
+        mIsFullScreen = true;
     }
 
     @Override
@@ -255,8 +238,28 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
-        return false;
+        ImageUtil.saveImg(this, mGanks[mEndPosition].getUrl())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        ShareUtil.shareImg(MeizhiDetailActivity.this,
+                                "分享妹纸到",
+                                "妹纸分享",
+                                "发现一个飘酿的妹纸✪ε✪",
+                                Uri.fromFile(new File(s)));
+                    }
+                }, new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable throwable) {
+                        throwable.printStackTrace();
+                        ToastUtil.shortShow("分享失败,请重试");
+                    }
+                });
+        return true;
     }
+
 
     class ImgPagerAdapter extends RecyclingPagerAdapter implements View.OnClickListener {
 

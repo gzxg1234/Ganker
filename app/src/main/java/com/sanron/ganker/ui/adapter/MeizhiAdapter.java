@@ -45,7 +45,7 @@ public class MeizhiAdapter extends PullRecyclerView.PullAdapter<MeizhiAdapter.Ho
         return mItems.get(position);
     }
 
-    public void addData(List<Gank> data) {
+    public void addAll(List<Gank> data) {
         if (data != null) {
             mItems.addAll(data);
             notifyDataSetChanged();

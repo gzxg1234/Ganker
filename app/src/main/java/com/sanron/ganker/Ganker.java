@@ -3,7 +3,6 @@ package com.sanron.ganker;
 import android.app.Application;
 
 import com.bumptech.glide.Glide;
-import com.sanron.ganker.db.GankerDB;
 import com.sanron.ganker.util.ToastUtil;
 
 import java.io.File;
@@ -29,16 +28,11 @@ public class Ganker extends Application {
 
 
     private static Ganker sAppContext;
-    private GankerDB mGankerDB;
 
-    public GankerDB getDB() {
-        return mGankerDB;
-    }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mGankerDB = new GankerDB(this);
         sAppContext = this;
         ToastUtil.init(this);
     }

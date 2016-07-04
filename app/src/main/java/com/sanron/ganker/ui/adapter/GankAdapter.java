@@ -30,7 +30,7 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
         mContext = context;
     }
 
-    public void setData(List<Gank> data) {
+    public void setData(List<? extends Gank> data) {
         mGanks.clear();
         if (data != null) {
             mGanks.addAll(data);
@@ -38,7 +38,7 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
         notifyDataSetChanged();
     }
 
-    public void addData(List<Gank> data) {
+    public void addAll(List<? extends Gank> data) {
         if (data != null) {
             mGanks.addAll(data);
             notifyDataSetChanged();
@@ -135,14 +135,12 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
                 case Gank.CATEGORY_ANDROID: {
                     return R.mipmap.ic_android_24dp;
                 }
-                case Gank.CATEGORY_EXPAND: {
-                    return R.mipmap.ic_expand_res_24dp;
-                }
                 case Gank.CATEGORY_FRONT_END: {
                     return R.mipmap.ic_front_end_24dp;
                 }
-                default:
-                    return 0;
+                default: {
+                    return R.mipmap.ic_expand_res_24dp;
+                }
             }
         }
 

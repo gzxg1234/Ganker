@@ -29,7 +29,7 @@ import com.sanron.ganker.data.GankerRetrofit;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.data.entity.SearchData;
 import com.sanron.ganker.ui.base.BaseFragment;
-import com.sanron.ganker.util.CommonUtil;
+import com.sanron.ganker.util.Common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -276,7 +276,7 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
             TextView tvClear = new TextView(getContext());
             tvClear.setTextSize(15);
             tvClear.setText("清除搜索记录");
-            final int padding = CommonUtil.dpToPx(getContext(), 8);
+            final int padding = Common.dpToPx(getContext(), 8);
             tvClear.setPadding(padding, padding, padding, padding);
             tvClear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));

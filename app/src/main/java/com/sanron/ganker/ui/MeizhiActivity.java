@@ -36,7 +36,6 @@ import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.functions.Func1;
-import rx.internal.util.SubscriptionList;
 import rx.schedulers.Schedulers;
 
 /**
@@ -72,7 +71,6 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
     private boolean mIsReentering = false;
 
     private Subscription mPreLoadSubscription;
-    private SubscriptionList mSubscriptionList = new SubscriptionList();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -122,7 +120,6 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
             @Override
             public boolean onPreDraw() {
                 mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
-                System.out.println("zxc");
                 ActivityCompat.startPostponedEnterTransition(MeizhiActivity.this);
                 return false;
             }
@@ -131,16 +128,19 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
 
     @Override
     public void onRefresh() {
-        mPage = 0;
-        onLoad();
+        loadData(true);
     }
 
     @Override
     public void onLoad() {
-        mSubscriptionList.add(GankerRetrofit
+        loadData(false);
+    }
+
+    public void loadData(final boolean refresh) {
+        addSub(GankerRetrofit
                 .get()
                 .getGankService()
-                .getByCategory(Gank.CATEGORY_FULI, PAGE_SIZE, mPage + 1)
+                .getByCategory(Gank.CATEGORY_FULI, PAGE_SIZE, refresh ? 1 : mPage + 1)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .map(new Func1<GankData, List<Gank>>() {
@@ -165,14 +165,20 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
 
                     @Override
                     public void onNext(List<Gank> ganks) {
-                        mAdapter.addData(ganks);
+                        if (refresh) {
+                            mAdapter.setData(ganks);
+                            mPage = 1;
+                        } else {
+                            mAdapter.addAll(ganks);
+                            mPage++;
+                        }
                         if (ganks.size() < PAGE_SIZE) {
                             mRecyclerView.setLoadEnable(false);
                         }
-                        mPage++;
                     }
                 }));
     }
+
 
     @Override
     public void onItemClick(final View itemView, final int position) {

@@ -35,8 +35,7 @@
             android:value="GlideModule"/>
 
         <activity
-            android:name=".ui.MainActivity"
-            android:screenOrientation="portrait">
+            android:name=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -49,7 +48,8 @@
             android:theme="@style/AppTheme.MeizhiDetail"/>
         <activity
             android:name=".ui.MeizhiActivity"/>
-
+        <activity
+            android:name=".ui.HistoryActivity"/>
     </application>
 
 </manifest>

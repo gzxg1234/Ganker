@@ -2,15 +2,20 @@ package com.sanron.ganker.ui;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
@@ -18,23 +23,26 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.sanron.ganker.Ganker;
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
-import com.sanron.ganker.db.CollectionGank;
-import com.sanron.ganker.db.GankerDB;
+import com.sanron.ganker.db.CollectionsTableHelper;
+import com.sanron.ganker.db.HistoryTableHelper;
+import com.sanron.ganker.db.entity.SaveGank;
 import com.sanron.ganker.ui.base.BaseActivity;
+import com.sanron.ganker.util.ShareUtil;
+import com.sanron.ganker.util.ToastUtil;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by sanron on 16-6-28.
  */
-public class GankWebActivity extends BaseActivity {
+public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemClickListener {
 
     @BindView(R.id.toolbar) Toolbar mToolbar;
     @BindView(R.id.webview) WebView mWebView;
@@ -42,6 +50,7 @@ public class GankWebActivity extends BaseActivity {
     @BindView(R.id.tv_desc) TextView mTvDesc;
     @BindView(R.id.iv_favorite) ImageView mIvFavorite;
 
+    private CollectionsTableHelper mCollectionsTableHelper;
     private Gank mGank;
     private Toast mToast;
     private long collectId = -1;
@@ -58,12 +67,14 @@ public class GankWebActivity extends BaseActivity {
         context.startActivity(intent);
     }
 
+
     public class LocalWebChromeClient extends WebChromeClient {
         @Override
         public void onProgressChanged(WebView view, int newProgress) {
             super.onProgressChanged(view, newProgress);
             mProgressBar.setProgress(newProgress);
         }
+
     }
 
     public class LocalWebViewClient extends WebViewClient {
@@ -90,6 +101,7 @@ public class GankWebActivity extends BaseActivity {
             mProgressBar.animate().cancel();
             mProgressBar.setTranslationY(0);
         }
+
     }
 
     @Override
@@ -99,31 +111,43 @@ public class GankWebActivity extends BaseActivity {
         ButterKnife.bind(this);
         initData();
         initView();
+        new HistoryTableHelper(this)
+                .add(mGank)
+                .subscribe();
     }
 
     private void initView() {
-        mToolbar.setTitle(mGank.getWho());
         setSupportActionBar(mToolbar);
-        mTvDesc.setText(mGank.getDesc());
+        mToolbar.setTitle(mGank.getWho());
+        mToolbar.setOnMenuItemClickListener(this);
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
+
+        mTvDesc.setText(mGank.getDesc());
+        WebSettings ws = mWebView.getSettings();
+        ws.setSupportZoom(true);
+        ws.setUseWideViewPort(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
+
         mWebView.loadUrl(mGank.getUrl());
         mWebView.setWebChromeClient(new LocalWebChromeClient());
         mWebView.setWebViewClient(new LocalWebViewClient());
 
-        GankerDB gankerDB = Ganker.get().getDB();
-        gankerDB.getCollectionByGankId(mGank.getGankId())
+        mCollectionsTableHelper
+                .deleteByGankId(mGank.getGankId())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Action1<CollectionGank>() {
+                .subscribe(new Action1<SaveGank>() {
                     @Override
-                    public void call(CollectionGank collectionGank) {
-                        if (collectionGank != null) {
+                    public void call(SaveGank saveGank) {
+                        if (saveGank != null) {
                             setCollectState(COLLECTED);
-                            collectId = collectionGank.id;
+                            collectId = saveGank.id;
                         } else {
                             setCollectState(UN_COLLECTED);
                         }
@@ -134,48 +158,94 @@ public class GankWebActivity extends BaseActivity {
     private void initData() {
         Intent intent = getIntent();
         mGank = (Gank) intent.getSerializableExtra(ARG_GANK);
-
+        mCollectionsTableHelper = new CollectionsTableHelper(this);
     }
 
-    public void showToast(String msg) {
-        if (mToast != null) {
-            mToast.cancel();
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_copy_url: {
+                copyUrl();
+            }
+            break;
+
+            case R.id.menu_open_by_browser: {
+                openByBrowser();
+            }
+            break;
+
+            case R.id.menu_share: {
+                shareGank();
+            }
+            break;
+
         }
-        mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
-        mToast.show();
+        return false;
+    }
+
+    private void copyUrl() {
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clipData = ClipData.newPlainText("text", mGank.getUrl());
+        cm.setPrimaryClip(clipData);
+        ToastUtil.shortShow("复制成功");
+    }
+
+    private void openByBrowser() {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(mGank.getUrl()));
+        startActivity(intent);
+    }
+
+    private void shareGank() {
+        ShareUtil.shareText(this, "分享干货",
+                "干货",
+                "刚刚发现了一个不错的干货,"
+                        + "[" + mGank.getDesc() + "]:" + mGank.getUrl());
+    }
+
+    private void cancelCollect() {
+        mCollectionsTableHelper
+                .deleteById(collectId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Boolean>() {
+                    @Override
+                    public void call(Boolean aBoolean) {
+                        if (aBoolean) {
+                            setCollectState(UN_COLLECTED);
+                            ToastUtil.shortShow("取消收藏成功");
+                        }
+                    }
+                });
+    }
+
+    private void collect() {
+        mCollectionsTableHelper
+                .add(mGank)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Long>() {
+                    @Override
+                    public void call(Long aLong) {
+                        if (aLong > -1) {
+                            collectId = aLong;
+                            setCollectState(COLLECTED);
+                            ToastUtil.shortShow("收藏成功");
+                        }
+                    }
+                });
     }
 
     @OnClick(R.id.iv_favorite)
     public void onClickFavorite(View v) {
-        GankerDB gankerDB = ((Ganker) getApplication()).getDB();
         switch (collectState) {
             case COLLECTED: {
-                gankerDB.deleteCollectionById(collectId)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action1<Boolean>() {
-                            @Override
-                            public void call(Boolean aBoolean) {
-                                if (aBoolean) {
-                                    setCollectState(UN_COLLECTED);
-                                    showToast("取消收藏成功");
-                                }
-                            }
-                        });
+                cancelCollect();
             }
             break;
             case UN_COLLECTED: {
-                gankerDB.addCollection(mGank)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action1<Long>() {
-                            @Override
-                            public void call(Long aLong) {
-                                if (aLong > -1) {
-                                    collectId = aLong;
-                                    setCollectState(COLLECTED);
-                                    showToast("收藏成功");
-                                }
-                            }
-                        });
+                collect();
             }
         }
     }

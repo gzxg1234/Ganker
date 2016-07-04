@@ -10,11 +10,15 @@ import android.view.ViewGroup;
 import com.umeng.analytics.MobclickAgent;
 
 import butterknife.ButterKnife;
+import rx.Subscription;
+import rx.subscriptions.CompositeSubscription;
 
 /**
  * Created by sanron on 16-6-28.
  */
 public abstract class BaseFragment extends Fragment {
+
+    private CompositeSubscription mCompositeSubscription;
 
     @Nullable
     @Override
@@ -27,6 +31,23 @@ public abstract class BaseFragment extends Fragment {
         }
         initView(root, savedInstanceState);
         return root;
+    }
+
+    protected void addSub(Subscription subscription) {
+        if (mCompositeSubscription == null
+                || mCompositeSubscription.isUnsubscribed()) {
+            mCompositeSubscription = new CompositeSubscription();
+        }
+        mCompositeSubscription.add(subscription);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (mCompositeSubscription != null
+                && mCompositeSubscription.hasSubscriptions()) {
+            mCompositeSubscription.unsubscribe();
+        }
     }
 
     @Override
