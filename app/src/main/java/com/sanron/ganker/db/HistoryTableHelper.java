@@ -1,7 +1,6 @@
 package com.sanron.ganker.db;
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -22,12 +21,19 @@ public class HistoryTableHelper extends BaseHelper {
 
     private static final int MAX_HISTORY_COUNT = 200;
 
-    public HistoryTableHelper(Context context) {
-        super(context);
+    private String mTableName = SaveGank.TABLE_HISTORY;
+
+    public HistoryTableHelper(GankerDB gankerDB) {
+        super(gankerDB);
     }
 
-    public static void onCreate(SQLiteDatabase db) {
-        String sql = "create table if not exists " + SaveGank.TABLE_HISTORY + "(" +
+    protected void setTableName(String tableName) {
+        mTableName = tableName;
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        String sql = "create table if not exists " + mTableName + "(" +
                 SaveGank.COLUMN_ID + " integer primary key," +
                 SaveGank.COLUMN_ADD_TIME + " integer," +
                 SaveGank.COLUMN_GANK_ID + " text," +
@@ -39,13 +45,18 @@ public class HistoryTableHelper extends BaseHelper {
         db.execSQL(sql);
     }
 
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
 
     public Observable<List<SaveGank>> getAll() {
         return createObserver(new Callable<List<SaveGank>>() {
             @Override
             public List<SaveGank> call() throws Exception {
                 List<SaveGank> result = new ArrayList<>();
-                Cursor c = getDataBase().query(SaveGank.TABLE_HISTORY,
+                Cursor c = getDataBase().query(mTableName,
                         null, null, null, null, null,
                         SaveGank.COLUMN_ADD_TIME + " desc");
                 while (c.moveToNext()) {
@@ -57,13 +68,12 @@ public class HistoryTableHelper extends BaseHelper {
         });
     }
 
-
     public Observable<List<SaveGank>> getByPage(final int pageSize, final int page) {
         return createObserver(new Callable<List<SaveGank>>() {
             @Override
             public List<SaveGank> call() throws Exception {
                 List<SaveGank> result = new ArrayList<>();
-                Cursor c = getDataBase().query(SaveGank.TABLE_HISTORY,
+                Cursor c = getDataBase().query(mTableName,
                         null, null, null, null, null,
                         SaveGank.COLUMN_ADD_TIME + " desc",
                         ((page - 1) * pageSize) + "," + pageSize);
@@ -136,8 +146,8 @@ public class HistoryTableHelper extends BaseHelper {
             @Override
             public Boolean call() throws Exception {
                 boolean result = false;
-                String selection = SaveGank.COLUMN_ID + "=?";
-                int delCount = getDataBase().delete(SaveGank.TABLE_HISTORY,
+                String selection = mTableName + "=?";
+                int delCount = getDataBase().delete(mTableName,
                         selection,
                         new String[]{id + ""});
                 if (delCount > 0) {
@@ -152,12 +162,12 @@ public class HistoryTableHelper extends BaseHelper {
         return createObserver(new Callable<Integer>() {
             @Override
             public Integer call() throws Exception {
-                return getDataBase().delete(SaveGank.TABLE_HISTORY, null, null);
+                return getDataBase().delete(mTableName, null, null);
             }
         });
     }
 
-    private static SaveGank toSaveGank(Cursor cursor) {
+    public static SaveGank toSaveGank(Cursor cursor) {
         SaveGank gank = new SaveGank();
         gank.id = cursor.getLong(cursor.getColumnIndex(SaveGank.COLUMN_ID));
         gank.addTime = cursor.getLong(cursor.getColumnIndex(SaveGank.COLUMN_ADD_TIME));

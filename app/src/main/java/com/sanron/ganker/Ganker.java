@@ -29,7 +29,6 @@ public class Ganker extends Application {
 
     private static Ganker sAppContext;
 
-
     @Override
     public void onCreate() {
         super.onCreate();

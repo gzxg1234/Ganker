@@ -13,11 +13,12 @@ public class Gank implements Serializable {
 
     public static final String CATEGORY_ANDROID = "Android";
     public static final String CATEGORY_IOS = "iOS";
+    public static final String CATEGORY_APP = "App";
     public static final String CATEGORY_EXPAND = "拓展资源";
     public static final String CATEGORY_FRONT_END = "前端";
     public static final String CATEGORY_FULI = "福利";
     public static final String CATEGORY_VEDIO = "休息视频";
-    public static final String CATEGORY_ALL = "all";
+    public static final String CATEGORY_RECMD = "瞎推荐";
 
     private String desc;
     private Date publishedAt;

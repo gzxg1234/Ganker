@@ -8,5 +8,6 @@
     <color name="textColorPrimaryInverse">#FFFFFFFF</color>
     <color name="textColorSecondaryInverse">#B2FFFFFF</color>
 
+    <color name="link_color">#1e37dc</color>
     <color name="lightGrey">#D3D3D3</color>
 </resources>

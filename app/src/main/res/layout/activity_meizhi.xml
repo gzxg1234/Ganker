@@ -19,7 +19,7 @@
             android:theme="@style/AppTheme.AppBar"
             app:layout_scrollFlags="scroll|enterAlways"
             app:navigationIcon="@mipmap/ic_arrow_back_white_24dp"
-            app:title="看妹纸"/>
+            app:title="@string/title_look_meizhi"/>
     </android.support.design.widget.AppBarLayout>
 
     <include

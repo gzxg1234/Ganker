@@ -49,7 +49,11 @@
         <activity
             android:name=".ui.MeizhiActivity"/>
         <activity
-            android:name=".ui.HistoryActivity"/>
+            android:name=".ui.SaveGankManagerActivity"/>
+        <activity
+            android:name=".ui.SubmitGankActivity"/>
+        <activity
+            android:name=".ui.AboutActivity"/>
     </application>
 
 </manifest>

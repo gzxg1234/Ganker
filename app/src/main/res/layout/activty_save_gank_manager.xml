@@ -17,13 +17,12 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
             app:navigationIcon="@mipmap/ic_arrow_back_white_24dp"
-            app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:title="历史记录">
+            app:popupTheme="@style/AppTheme.PopupOverlay">
 
         </android.support.v7.widget.Toolbar>
     </android.support.design.widget.AppBarLayout>
 
-    <com.sanron.ganker.widget.PullRecyclerView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_history"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

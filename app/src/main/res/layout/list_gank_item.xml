@@ -5,13 +5,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:contentPadding="16dp">
+    app:cardCornerRadius="0dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <CheckBox
+            android:id="@+id/cb_check"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:visibility="gone"/>
 
         <ImageView
             android:id="@+id/iv_icon"
@@ -52,9 +62,9 @@
                     android:layout_marginLeft="4dp"
                     android:layout_weight="1"
                     android:maxLines="1"
-                    android:text="2015-05-23"
                     android:textColor="@color/textColorSecondary"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp"
+                    tools:text="2015-05-23"/>
 
                 <TextView
                     android:id="@+id/tv_who"
@@ -64,9 +74,9 @@
                     android:layout_weight="1"
                     android:gravity="right|center_vertical"
                     android:maxLines="1"
-                    android:text="代码家"
                     android:textColor="@color/textColorSecondary"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp"
+                    tools:text="代码家"/>
             </LinearLayout>
 
         </LinearLayout>

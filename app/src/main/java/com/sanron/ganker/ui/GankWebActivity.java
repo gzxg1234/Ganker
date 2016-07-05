@@ -15,20 +15,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
-import com.sanron.ganker.db.CollectionsTableHelper;
-import com.sanron.ganker.db.HistoryTableHelper;
+import com.sanron.ganker.db.GankerDB;
 import com.sanron.ganker.db.entity.SaveGank;
+import com.sanron.ganker.event.CollectionUpdateEvent;
+import com.sanron.ganker.event.HistoryUpdateEvent;
 import com.sanron.ganker.ui.base.BaseActivity;
+import com.sanron.ganker.util.RxBus;
 import com.sanron.ganker.util.ShareUtil;
 import com.sanron.ganker.util.ToastUtil;
 
@@ -50,14 +53,12 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
     @BindView(R.id.tv_desc) TextView mTvDesc;
     @BindView(R.id.iv_favorite) ImageView mIvFavorite;
 
-    private CollectionsTableHelper mCollectionsTableHelper;
     private Gank mGank;
-    private Toast mToast;
     private long collectId = -1;
     private int collectState = UN_CHECK;
-    private static final int UN_CHECK = 0;
-    private static final int COLLECTED = 1;
-    private static final int UN_COLLECTED = 2;
+    private static final int UN_CHECK = 0;//未检查
+    private static final int COLLECTED = 1;//已收藏
+    private static final int UN_COLLECTED = 2;//未收藏
 
     private static final String ARG_GANK = "gank";
 
@@ -74,35 +75,49 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
             super.onProgressChanged(view, newProgress);
             mProgressBar.setProgress(newProgress);
         }
-
     }
 
     public class LocalWebViewClient extends WebViewClient {
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
-            mProgressBar.animate().cancel();
-            mProgressBar.animate()
-                    .translationY(-mProgressBar.getHeight())
-                    .setDuration(300)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            mProgressBar.setVisibility(View.INVISIBLE);
-                        }
-                    })
-                    .start();
+            animateHideProgress();
+        }
+
+        @Override
+        public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            super.onReceivedError(view, request, error);
+            animateHideProgress();
+            ToastUtil.shortShow(getString(R.string.web_error));
         }
 
         @Override
         public void onPageStarted(final WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
-            mProgressBar.setVisibility(View.VISIBLE);
-            mProgressBar.animate().cancel();
-            mProgressBar.setTranslationY(0);
+            animateShowProgress();
         }
-
     }
+
+    private void animateShowProgress() {
+        mProgressBar.setVisibility(View.VISIBLE);
+        mProgressBar.animate().cancel();
+        mProgressBar.setTranslationY(0);
+    }
+
+    private void animateHideProgress() {
+        mProgressBar.animate().cancel();
+        mProgressBar.animate()
+                .translationY(-mProgressBar.getHeight())
+                .setDuration(300)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        mProgressBar.setVisibility(View.INVISIBLE);
+                    }
+                })
+                .start();
+    }
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -111,35 +126,22 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
         ButterKnife.bind(this);
         initData();
         initView();
-        new HistoryTableHelper(this)
+        //添加浏览历史
+        GankerDB.get(this)
+                .getHistoryTableHelper()
                 .add(mGank)
-                .subscribe();
-    }
-
-    private void initView() {
-        setSupportActionBar(mToolbar);
-        mToolbar.setTitle(mGank.getWho());
-        mToolbar.setOnMenuItemClickListener(this);
-        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        mTvDesc.setText(mGank.getDesc());
-        WebSettings ws = mWebView.getSettings();
-        ws.setSupportZoom(true);
-        ws.setUseWideViewPort(true);
-        ws.setBuiltInZoomControls(true);
-        ws.setDisplayZoomControls(false);
-
-        mWebView.loadUrl(mGank.getUrl());
-        mWebView.setWebChromeClient(new LocalWebChromeClient());
-        mWebView.setWebViewClient(new LocalWebViewClient());
-
-        mCollectionsTableHelper
-                .deleteByGankId(mGank.getGankId())
+                .subscribe(new Action1<Long>() {
+                    @Override
+                    public void call(Long aLong) {
+                        if (aLong > -1) {
+                            RxBus.getDefault().post(new HistoryUpdateEvent());
+                        }
+                    }
+                });
+        //检查是否收藏
+        GankerDB.get(this)
+                .getCollectionsTableHelper()
+                .getByGankId(mGank.getGankId())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<SaveGank>() {
@@ -155,10 +157,33 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
                 });
     }
 
+    private void initView() {
+        mToolbar.setTitle(mGank.getWho());
+        setSupportActionBar(mToolbar);
+        mToolbar.setOnMenuItemClickListener(this);
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        mTvDesc.setText(mGank.getDesc());
+        mTvDesc.requestFocus();
+        WebSettings ws = mWebView.getSettings();
+        ws.setSupportZoom(true);
+        ws.setUseWideViewPort(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
+
+        mWebView.loadUrl(mGank.getUrl());
+        mWebView.setWebChromeClient(new LocalWebChromeClient());
+        mWebView.setWebViewClient(new LocalWebViewClient());
+    }
+
     private void initData() {
         Intent intent = getIntent();
         mGank = (Gank) intent.getSerializableExtra(ARG_GANK);
-        mCollectionsTableHelper = new CollectionsTableHelper(this);
     }
 
 
@@ -180,6 +205,10 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
             }
             break;
 
+            case R.id.menu_refresh: {
+                mWebView.reload();
+            }
+            break;
         }
         return false;
     }
@@ -188,7 +217,7 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clipData = ClipData.newPlainText("text", mGank.getUrl());
         cm.setPrimaryClip(clipData);
-        ToastUtil.shortShow("复制成功");
+        ToastUtil.shortShow(getString(R.string.copy_success));
     }
 
     private void openByBrowser() {
@@ -198,14 +227,14 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
     }
 
     private void shareGank() {
-        ShareUtil.shareText(this, "分享干货",
-                "干货",
-                "刚刚发现了一个不错的干货,"
-                        + "[" + mGank.getDesc() + "]:" + mGank.getUrl());
+        ShareUtil.shareText(this, getString(R.string.share_gank_title),
+                getString(R.string.share_gank_subject),
+                getString(R.string.share_gank_text, mGank.getDesc(), mGank.getUrl()));
     }
 
     private void cancelCollect() {
-        mCollectionsTableHelper
+        GankerDB.get(this)
+                .getCollectionsTableHelper()
                 .deleteById(collectId)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -214,14 +243,17 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
                     public void call(Boolean aBoolean) {
                         if (aBoolean) {
                             setCollectState(UN_COLLECTED);
-                            ToastUtil.shortShow("取消收藏成功");
+                            ToastUtil.shortShow(getString(R.string.cancel_collection_success));
+                            //通知数据变化
+                            RxBus.getDefault().post(new CollectionUpdateEvent());
                         }
                     }
                 });
     }
 
     private void collect() {
-        mCollectionsTableHelper
+        GankerDB.get(this)
+                .getCollectionsTableHelper()
                 .add(mGank)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -231,7 +263,9 @@ public class GankWebActivity extends BaseActivity implements Toolbar.OnMenuItemC
                         if (aLong > -1) {
                             collectId = aLong;
                             setCollectState(COLLECTED);
-                            ToastUtil.shortShow("收藏成功");
+                            ToastUtil.shortShow(getString(R.string.collection_success));
+                            //通知数据变化
+                            RxBus.getDefault().post(new CollectionUpdateEvent());
                         }
                     }
                 });

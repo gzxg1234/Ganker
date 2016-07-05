@@ -1,1 +1,1 @@
-include ':app', ':salvage'
+include ':app', ':salvage', ':nicespinner'

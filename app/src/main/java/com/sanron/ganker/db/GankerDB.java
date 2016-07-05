@@ -26,18 +26,32 @@ public class GankerDB extends SQLiteOpenHelper {
         return INSTATNCE;
     }
 
+    private HistoryTableHelper mHistoryTableHelper;
+    private CollectionsTableHelper mCollectionsTableHelper;
+
     public GankerDB(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+        mHistoryTableHelper = new HistoryTableHelper(this);
+        mCollectionsTableHelper = new CollectionsTableHelper(this);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        CollectionsTableHelper.onCreate(db);
-        HistoryTableHelper.onCreate(db);
+        mHistoryTableHelper.onCreate(db);
+        mCollectionsTableHelper.onCreate(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        mHistoryTableHelper.onUpgrade(db, oldVersion, newVersion);
+        mCollectionsTableHelper.onUpgrade(db, oldVersion, newVersion);
+    }
 
+    public HistoryTableHelper getHistoryTableHelper() {
+        return mHistoryTableHelper;
+    }
+
+    public CollectionsTableHelper getCollectionsTableHelper() {
+        return mCollectionsTableHelper;
     }
 }

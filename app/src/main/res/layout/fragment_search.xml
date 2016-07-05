@@ -2,7 +2,6 @@
 <android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
@@ -31,18 +30,17 @@
                 />
 
             <EditText
-                android:id="@+id/et_word"
+                android:id="@+id/et_keyword"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@null"
-                android:hint="搜一搜"
+                android:hint="@string/hint_search"
                 android:imeOptions="actionSearch"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
                 android:textColorHint="@color/lightGrey"
                 android:textCursorDrawable="@null"
-                tools:text="自定义view"
                 />
 
             <ImageView
@@ -80,6 +78,7 @@
                 android:layout_height="wrap_content"
                 android:background="@color/colorPrimary"
                 app:tabIndicatorColor="@color/colorAccent"
+                app:tabMode="scrollable"
                 app:tabSelectedTextColor="@color/textColorPrimaryInverse"
                 app:tabTextColor="@color/textColorSecondaryInverse"/>
 

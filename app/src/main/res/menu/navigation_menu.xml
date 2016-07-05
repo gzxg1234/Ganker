@@ -9,29 +9,29 @@
         <item
             android:id="@+id/menu_meizhi"
             android:icon="@mipmap/ic_favorite_black_24dp"
-            android:title="妹纸"/>
+            android:title="@string/menu_meizhi"/>
         <item
             android:id="@+id/menu_history"
             android:icon="@mipmap/ic_history_black_24dp"
-            android:title="足迹"/>
+            android:title="@string/menu_history"/>
 
         <item
             android:id="@+id/menu_collections"
             android:icon="@mipmap/ic_bookmark_border_black_24dp"
-            android:title="收藏"/>
+            android:title="@string/menu_collect"/>
     </group>
 
     <group
         android:id="@+id/group2"
         android:checkableBehavior="none">
         <item
-            android:id="@+id/menu_feedback"
+            android:id="@+id/menu_submit_gank"
             android:icon="@mipmap/ic_mode_edit_black_24dp"
-            android:title="反馈"/>
+            android:title="@string/menu_submit_gank"/>
 
         <item
-            android:id="@+id/menu_setting"
+            android:id="@+id/menu_about"
             android:icon="@mipmap/ic_settings_black_24dp"
-            android:title="设置"/>
+            android:title="@string/menu_about"/>
     </group>
 </menu>

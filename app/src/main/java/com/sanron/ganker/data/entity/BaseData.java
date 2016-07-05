@@ -11,4 +11,7 @@ public class BaseData implements Serializable {
 
     @JsonProperty("error")
     public boolean error;
+
+    @JsonProperty("msg")
+    public String msg;
 }

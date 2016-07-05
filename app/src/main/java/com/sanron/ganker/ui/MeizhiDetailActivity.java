@@ -159,7 +159,7 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
         if (PermissionUtil.isMarshmallow()
                 && !PermissionUtil.hasPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             new PermissionDialog(this)
-                    .setMessage("应用保存图片,需要授予以下权限")
+                    .setMessage(getString(R.string.permission_rationale_stroge_save_img))
                     .setPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     .setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
@@ -182,12 +182,12 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
                 .subscribe(new Action1<String>() {
                     @Override
                     public void call(String s) {
-                        ToastUtil.longShow("保存成功,在" + s);
+                        ToastUtil.longShow(getString(R.string.save_meizhi_success, s));
                     }
                 }, new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
-                        ToastUtil.shortShow("保存失败,请检查网络或者sd卡");
+                        ToastUtil.shortShow(getString(R.string.save_meizhi_failed));
                     }
                 });
     }
@@ -245,16 +245,16 @@ public class MeizhiDetailActivity extends BaseActivity implements Toolbar.OnMenu
                     @Override
                     public void call(String s) {
                         ShareUtil.shareImg(MeizhiDetailActivity.this,
-                                "分享妹纸到",
-                                "妹纸分享",
-                                "发现一个飘酿的妹纸✪ε✪",
+                                getString(R.string.share_meizhi_title),
+                                getString(R.string.share_meizhi_subject),
+                                getString(R.string.share_meizhi_text),
                                 Uri.fromFile(new File(s)));
                     }
                 }, new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
                         throwable.printStackTrace();
-                        ToastUtil.shortShow("分享失败,请重试");
+                        ToastUtil.shortShow(getString(R.string.share_meizhi_failed));
                     }
                 });
         return true;

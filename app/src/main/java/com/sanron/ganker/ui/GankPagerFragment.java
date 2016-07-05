@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.sanron.ganker.R;
@@ -13,7 +14,7 @@ import com.sanron.ganker.ui.base.BaseFragment;
 import com.sanron.ganker.util.Common;
 import com.sanron.ganker.util.ToastUtil;
 import com.sanron.ganker.widget.DividerItemDecoration;
-import com.sanron.ganker.widget.PullRecyclerView;
+import com.sanron.ganker.widget.PullAdapter;
 
 import java.io.Serializable;
 import java.util.List;
@@ -27,9 +28,9 @@ import rx.schedulers.Schedulers;
 /**
  * Created by sanron on 16-6-28.
  */
-public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, PullRecyclerView.OnLoadMoreListener {
+public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, PullAdapter.OnLoadMoreListener {
 
-    @BindView(R.id.recycler_view) PullRecyclerView mRecyclerView;
+    @BindView(R.id.recycler_view) RecyclerView mRecyclerView;
     @BindView(R.id.refresh_layout) SwipeRefreshLayout mSwipeRefreshLayout;
 
     private GankAdapter mGankAdapter;
@@ -65,7 +66,7 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.addItemDecoration(new DividerItemDecoration(Common.dpToPx(getContext(), 4)));
         mRecyclerView.setAdapter(mGankAdapter);
-        mRecyclerView.setOnLoadMoreListener(this);
+        mGankAdapter.setOnLoadMoreListener(this);
         if (!mIsLoaded && getUserVisibleHint()) {
             firstLoad();
         }
@@ -107,14 +108,14 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
     }
 
     @Override
-    public int getLayoutId() {
+    public int getLayoutResId() {
         return R.layout.pullrefresh_with_recycler_view;
     }
 
 
     @Override
     public void onRefresh() {
-        mRecyclerView.setLoadEnable(true);
+        mGankAdapter.setLoadEnable(true);
         loadData(true);
     }
 
@@ -134,15 +135,15 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
         @Override
         public void onCompleted() {
             mSwipeRefreshLayout.setRefreshing(false);
-            mRecyclerView.setLoading(false);
+            mGankAdapter.onLoadComplete();
         }
 
         @Override
         public void onError(Throwable e) {
             e.printStackTrace();
             mSwipeRefreshLayout.setRefreshing(false);
-            mRecyclerView.setLoading(false);
-            ToastUtil.shortShow("获取数据失败");
+            mGankAdapter.onLoadComplete();
+            ToastUtil.shortShow(getString(R.string.load_data_failed));
         }
 
         @Override
@@ -156,7 +157,7 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
             }
             if (ganks.size() < PAGE_SIZE) {
                 //没有更多
-                mRecyclerView.setLoadEnable(false);
+                mGankAdapter.setLoadEnable(false);
             }
         }
     }

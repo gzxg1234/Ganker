@@ -11,7 +11,7 @@ import android.widget.TextView;
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.ui.GankWebActivity;
-import com.sanron.ganker.widget.PullRecyclerView;
+import com.sanron.ganker.widget.PullAdapter;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder> {
+public class GankAdapter extends PullAdapter<GankAdapter.Holder> {
 
     private Context mContext;
     private List<Gank> mGanks = new ArrayList<>();
@@ -85,7 +85,7 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
         return LayoutInflater.from(mContext).inflate(R.layout.loading_footer_layout, parent, false);
     }
 
-    public static class Holder extends RecyclerView.ViewHolder {
+    public class Holder extends RecyclerView.ViewHolder {
         @BindView(R.id.tv_desc)
         TextView tvDesc;
         @BindView(R.id.tv_published_time)
@@ -114,16 +114,16 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                             return sdf.format(time);
                         } else {
-                            return day + "天前";
+                            return mContext.getString(R.string.days_ago, day);
                         }
                     } else {
-                        return hour + "小时前";
+                        return mContext.getString(R.string.hours_ago, hour);
                     }
                 } else {
-                    return min + "分钟前";
+                    return mContext.getString(R.string.minute_ago, min);
                 }
             } else {
-                return "刚刚";
+                return mContext.getString(R.string.a_moment_ago);
             }
         }
 
@@ -137,6 +137,9 @@ public class GankAdapter extends PullRecyclerView.PullAdapter<GankAdapter.Holder
                 }
                 case Gank.CATEGORY_FRONT_END: {
                     return R.mipmap.ic_front_end_24dp;
+                }
+                case Gank.CATEGORY_APP: {
+                    return R.mipmap.ic_app_24dp;
                 }
                 default: {
                     return R.mipmap.ic_expand_res_24dp;

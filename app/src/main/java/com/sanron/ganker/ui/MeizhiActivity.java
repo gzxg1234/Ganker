@@ -8,6 +8,7 @@ import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.SharedElementCallback;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -23,7 +24,7 @@ import com.sanron.ganker.data.entity.GankData;
 import com.sanron.ganker.ui.adapter.MeizhiAdapter;
 import com.sanron.ganker.ui.base.BaseActivity;
 import com.sanron.ganker.util.ToastUtil;
-import com.sanron.ganker.widget.PullRecyclerView;
+import com.sanron.ganker.widget.PullAdapter;
 
 import java.util.List;
 import java.util.Map;
@@ -41,11 +42,11 @@ import rx.schedulers.Schedulers;
 /**
  * Created by sanron on 16-7-3.
  */
-public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener, PullRecyclerView.OnLoadMoreListener {
+public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener, PullAdapter.OnLoadMoreListener {
 
     @BindView(R.id.toolbar) Toolbar mToolbar;
     @BindView(R.id.refresh_layout) SwipeRefreshLayout mSwipeRefreshLayout;
-    @BindView(R.id.recycler_view) PullRecyclerView mRecyclerView;
+    @BindView(R.id.recycler_view) RecyclerView mRecyclerView;
 
     private SharedElementCallback mSharedElementCallback = new SharedElementCallback() {
         @Override
@@ -87,7 +88,7 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
         mAdapter = new MeizhiAdapter(this);
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setOnLoadMoreListener(this);
+        mAdapter.setOnLoadMoreListener(this);
         mAdapter.setOnItemClickListener(this);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
@@ -153,14 +154,14 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
                     @Override
                     public void onCompleted() {
                         mSwipeRefreshLayout.setRefreshing(false);
-                        mRecyclerView.setLoading(false);
+                        mAdapter.onLoadComplete();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         mSwipeRefreshLayout.setRefreshing(false);
-                        mRecyclerView.setLoading(false);
-                        ToastUtil.shortShow("加载失败");
+                        mAdapter.onLoadComplete();
+                        ToastUtil.shortShow(getString(R.string.load_data_failed));
                     }
 
                     @Override
@@ -173,7 +174,7 @@ public class MeizhiActivity extends BaseActivity implements MeizhiAdapter.OnItem
                             mPage++;
                         }
                         if (ganks.size() < PAGE_SIZE) {
-                            mRecyclerView.setLoadEnable(false);
+                            mAdapter.setLoadEnable(false);
                         }
                     }
                 }));

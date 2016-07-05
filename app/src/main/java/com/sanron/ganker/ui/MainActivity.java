@@ -77,6 +77,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
         requestPermission();
     }
 
+
     private void initView() {
         mViewPager.setAdapter(new LocalPagerAdapter(getSupportFragmentManager()));
         mTabLayout.setupWithViewPager(mViewPager);
@@ -98,7 +99,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, p)) {
                 String alert = null;
                 if (Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(p)) {
-                    alert = "应用缓存网络资源,节省网络流量,需要授予以下权限";
+                    alert = getString(R.string.permission_rationale_stroge_cache);
                 }
                 if (Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(p)) {
                     new PermissionDialog(this)
@@ -122,7 +123,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
     public void onShuffle() {
         addFragmentToFront(
                 ShuffleGankFragment.newInstance(
-                        LocalPagerAdapter.CATEGORIES[mViewPager.getCurrentItem()]));
+                        LocalPagerAdapter.TYPES[mViewPager.getCurrentItem()]));
     }
 
 
@@ -147,23 +148,26 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
             break;
 
             case R.id.menu_history: {
-                Intent intent = new Intent(this, HistoryActivity.class);
+                Intent intent = new Intent(this, SaveGankManagerActivity.class);
+                intent.putExtra(SaveGankManagerActivity.EXTRA_TYPE, SaveGankManagerActivity.TYPE_HISTORY);
                 startActivity(intent);
             }
             break;
 
             case R.id.menu_collections: {
-
+                Intent intent = new Intent(this, SaveGankManagerActivity.class);
+                intent.putExtra(SaveGankManagerActivity.EXTRA_TYPE, SaveGankManagerActivity.TYPE_COLLECTION);
+                startActivity(intent);
             }
             break;
 
-            case R.id.menu_feedback: {
-
+            case R.id.menu_submit_gank: {
+                startActivity(new Intent(this, SubmitGankActivity.class));
             }
             break;
 
-            case R.id.menu_setting: {
-
+            case R.id.menu_about: {
+                startActivity(new Intent(this, AboutActivity.class));
             }
             break;
         }
@@ -211,8 +215,11 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
 
     public static class LocalPagerAdapter extends FragmentPagerAdapter {
 
-        public static final String[] CATEGORIES = {Gank.CATEGORY_ANDROID,
-                Gank.CATEGORY_IOS, Gank.CATEGORY_FRONT_END, Gank.CATEGORY_EXPAND};
+        public static final String[] TYPES = {Gank.CATEGORY_ANDROID,
+                Gank.CATEGORY_IOS,
+                Gank.CATEGORY_APP,
+                Gank.CATEGORY_FRONT_END,
+                Gank.CATEGORY_EXPAND};
 
         public static class CategoryGankCreator extends GankPagerFragment.ObservableCreator {
             private String category;
@@ -242,17 +249,17 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
 
         @Override
         public Fragment getItem(final int position) {
-            return GankPagerFragment.newInstance(new CategoryGankCreator(CATEGORIES[position]));
+            return GankPagerFragment.newInstance(new CategoryGankCreator(TYPES[position]));
         }
 
         @Override
         public int getCount() {
-            return CATEGORIES.length;
+            return TYPES.length;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return CATEGORIES[position];
+            return TYPES[position];
         }
     }
 

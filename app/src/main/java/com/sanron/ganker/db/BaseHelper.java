@@ -1,6 +1,5 @@
 package com.sanron.ganker.db;
 
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.util.concurrent.Callable;
@@ -11,16 +10,20 @@ import rx.Subscriber;
 /**
  * Created by sanron on 16-7-4.
  */
-public class BaseHelper {
+public abstract class BaseHelper {
     private GankerDB mGankerDB;
 
-    public BaseHelper(Context context) {
-        mGankerDB = GankerDB.get(context);
+    public BaseHelper(GankerDB gankerDB) {
+        mGankerDB = gankerDB;
     }
 
     protected SQLiteDatabase getDataBase() {
         return mGankerDB.getWritableDatabase();
     }
+
+    public abstract void onCreate(SQLiteDatabase db);
+
+    public abstract void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
 
     public static <T> Observable<T> createObserver(final Callable<T> callable) {
         return Observable.create(new Observable.OnSubscribe<T>() {

@@ -50,7 +50,7 @@ import rx.subjects.PublishSubject;
  */
 public class SearchFragment extends BaseFragment implements TextView.OnEditorActionListener {
 
-    @BindView(R.id.et_word) EditText etWord;
+    @BindView(R.id.et_keyword) EditText etWord;
     @BindView(R.id.iv_back) View ivBack;
     @BindView(R.id.id_clear) View clear;
     @BindView(R.id.list_search_history) RecyclerView mListSearchHistory;
@@ -63,10 +63,13 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
     private LocalPagerAdapter mSearchPagerAdapter;
     private HistoryAdapter mHistoryAdapter;
     private static final String[] PAGE_CATEGORIES = {Gank.CATEGORY_ANDROID,
-            Gank.CATEGORY_IOS, Gank.CATEGORY_FRONT_END, Gank.CATEGORY_EXPAND};
+            Gank.CATEGORY_IOS,
+            Gank.CATEGORY_APP,
+            Gank.CATEGORY_FRONT_END,
+            Gank.CATEGORY_EXPAND};
 
     @Override
-    public int getLayoutId() {
+    public int getLayoutResId() {
         return R.layout.fragment_search;
     }
 
@@ -128,7 +131,7 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
     }
 
 
-    @OnTextChanged(R.id.et_word)
+    @OnTextChanged(R.id.et_keyword)
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         if (TextUtils.isEmpty(s)) {
             clear.setVisibility(View.INVISIBLE);
@@ -275,7 +278,7 @@ public class SearchFragment extends BaseFragment implements TextView.OnEditorAct
         private View createClearView() {
             TextView tvClear = new TextView(getContext());
             tvClear.setTextSize(15);
-            tvClear.setText("清除搜索记录");
+            tvClear.setText(getString(R.string.clear_search_history));
             final int padding = Common.dpToPx(getContext(), 8);
             tvClear.setPadding(padding, padding, padding, padding);
             tvClear.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,

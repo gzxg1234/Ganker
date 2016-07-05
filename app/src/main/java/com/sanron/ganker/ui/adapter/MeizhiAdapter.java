@@ -13,7 +13,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
-import com.sanron.ganker.widget.PullRecyclerView;
+import com.sanron.ganker.widget.PullAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ import butterknife.ButterKnife;
 /**
  * Created by sanron on 16-7-2.
  */
-public class MeizhiAdapter extends PullRecyclerView.PullAdapter<MeizhiAdapter.Holder> {
+public class MeizhiAdapter extends PullAdapter<MeizhiAdapter.Holder> {
 
     private Context mContext;
     private List<Gank> mItems = new ArrayList<>();

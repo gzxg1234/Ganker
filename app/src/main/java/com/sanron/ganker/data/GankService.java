@@ -1,10 +1,14 @@
 package com.sanron.ganker.data;
 
+import com.sanron.ganker.data.entity.BaseData;
 import com.sanron.ganker.data.entity.GankData;
 import com.sanron.ganker.data.entity.HistoryDates;
 import com.sanron.ganker.data.entity.SearchData;
 
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.POST;
 import retrofit2.http.Path;
 import rx.Observable;
 
@@ -25,8 +29,10 @@ public interface GankService {
      * @return
      */
     @GET("search/query/{search}/category/{category}/count/{count}/page/{page}")
-    Observable<SearchData> search(@Path("search") String search, @Path("category") String category,
-                                  @Path("count") int count, @Path("page") int page);
+    Observable<SearchData> search(@Path("search") String search,
+                                  @Path("category") String category,
+                                  @Path("count") int count,
+                                  @Path("page") int page);
 
 
     /**
@@ -38,7 +44,8 @@ public interface GankService {
      * @return
      */
     @GET("history/content/day/{year}/{month}/{day}")
-    Observable<GankData> getByDate(@Path("year") int year, @Path("month") int month,
+    Observable<GankData> getByDate(@Path("year") int year,
+                                   @Path("month") int month,
                                    @Path("day") int day);
 
     @GET("history")
@@ -52,4 +59,12 @@ public interface GankService {
     @GET("random/data/{category}/{count}")
     Observable<GankData> shuffleGank(@Path("category") String category,
                                      @Path("count") int count);
+
+    @FormUrlEncoded
+    @POST("add2gank")
+    Observable<BaseData> addGank(@Field("desc") String desc,
+                                 @Field("url") String url,
+                                 @Field("who") String who,
+                                 @Field("type") String type,
+                                 @Field("debug") boolean debug);
 }

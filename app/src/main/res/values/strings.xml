@@ -1,3 +1,85 @@
 <resources>
     <string name="app_name">Ganker</string>
+
+    <!-- MainActivity-->
+    <string name="menu_meizhi">妹纸</string>
+    <string name="menu_history">足迹</string>
+    <string name="menu_collect">收藏</string>
+    <string name="menu_submit_gank">提交干货</string>
+    <string name="menu_about">关于Ganker</string>
+    <string name="menu_search">搜索</string>
+    <string name="permission_rationale_stroge_cache">应用缓存网络资源,节省网络流量,需要授予以下权限"</string>
+    <string name="network_none">网络连接不可用,请检查网络设置</string>
+
+    <!-- GankWebActivity-->
+    <string name="menu_open_in_browser">用浏览器打开</string>
+    <string name="menu_copy_url">复制链接</string>
+    <string name="menu_share">分享</string>
+    <string name="menu_refresh">刷新</string>
+    <string name="web_error">打开网页失败,请尝试刷新</string>
+    <string name="share_gank_title">分享干货</string>
+    <string name="share_gank_subject">"干货"</string>
+    <string name="share_gank_text">"刚刚发现了一个不错的干货,[%1$s] :%2$s</string>
+    <string name="copy_success">复制成功</string>
+    <string name="collection_success">收藏成功</string>
+    <string name="cancel_collection_success">取消收藏成功</string>
+
+    <!-- ShuffleGankFragment-->
+    <string name="title_shuffle">随便看看</string>
+    <string name="all_shuffle">都看看</string>
+
+    <!-- MeizhiActivity-->
+    <string name="title_look_meizhi">看妹纸</string>
+
+
+    <!-- SubmitGankActivity-->
+    <string name="hint_desc">描述</string>
+    <string name="hint_url">URL</string>
+    <string name="hint_who">输入您滴大名</string>
+    <string name="submit">提交</string>
+
+    <!-- SearchFragment-->
+    <string name="hint_search">搜一搜</string>
+    <string name="clear_search_history">清空搜索记录</string>
+
+
+    <!-- MeiZhiDetailActivity-->
+    <string name="permission_rationale_stroge_save_img">应用保存图片,需要授予以下权限</string>
+    <string name="save_meizhi_success">保存成功,在%1$s</string>
+    <string name="save_meizhi_failed">保存失败,请检查网络或者sd卡</string>
+    <string name="share_meizhi_title">分享妹纸</string>
+    <string name="share_meizhi_subject">妹纸</string>
+    <string name="share_meizhi_text">发现一个飘酿的妹纸✪ε✪</string>
+    <string name="share_meizhi_failed">分享失败,请重试</string>
+
+    <!-- SaveGankManagerActivity-->
+    <string name="menu_clear">清空</string>
+    <string name="title_collect">我的收藏</string>
+    <string name="title_history">浏览记录</string>
+    <string name="empty_list">当前列表为空</string>
+    <string name="cancel_all_collection">确定取消所有收藏?</string>
+    <string name="clear_history">清空历史记录?</string>
+
+
+    <!-- SubmitGankActivity-->
+    <string name="input_error_desc">请输入描述</string>
+    <string name="input_error_url">请输入URL</string>
+    <string name="input_error_who">提交者名称</string>
+    <string name="select_submit_type">请选择提交类型</string>
+    <string name="submit_success">提交成功,正在审核,审核成功后便可以看到您提交的干货啦</string>
+    <string name="submit_failed">提交失败,请重试</string>
+
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="loading">加载中</string>
+    <string name="load_data_failed">获取数据失败</string>
+
+    <!-- GankAdapter-->
+    <string name="minute_ago">%1$d分钟前</string>
+    <string name="hours_ago">%1$d小时前</string>
+    <string name="days_ago">%1$d天前</string>
+    <string name="a_moment_ago">刚刚</string>
+    <string name="check_update">检查更新</string>
+    <string name="about_author">关于作者</string>
+    <string name="github">GitHub</string>
 </resources>

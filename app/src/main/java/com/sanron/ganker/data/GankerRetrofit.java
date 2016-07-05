@@ -30,9 +30,6 @@ public class GankerRetrofit {
         return HOLDER.INSTANCE;
     }
 
-    private Retrofit mRetrofit;
-    private GankService mGankService;
-
     private static final int CACHE_MAX_SIZE = 2 * 1024 * 1024;//2MB
 
     private static final Interceptor CACHE_INTERCEPTOR = new Interceptor() {
@@ -55,6 +52,9 @@ public class GankerRetrofit {
         }
     };
 
+    private Retrofit mRetrofit;
+    private GankService mGankService;
+
     private GankerRetrofit() {
         File cacheFile = new File(Ganker.get().getCacheDir(), "http_cache");
         if (!cacheFile.exists()) {
@@ -62,8 +62,8 @@ public class GankerRetrofit {
         }
         OkHttpClient httpClient = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
-                .cache(new Cache(cacheFile, CACHE_MAX_SIZE))
                 .readTimeout(30, TimeUnit.SECONDS)
+                .cache(new Cache(cacheFile, CACHE_MAX_SIZE))
                 .addInterceptor(CACHE_INTERCEPTOR)
                 .addNetworkInterceptor(CACHE_INTERCEPTOR)
                 .build();

@@ -18,7 +18,7 @@
             android:background="@color/colorPrimary"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:navigationIcon="@mipmap/ic_arrow_back_white_24dp"
-            app:title="随便看看"/>
+            app:title="@string/title_shuffle"/>
     </android.support.design.widget.AppBarLayout>
 
     <include
