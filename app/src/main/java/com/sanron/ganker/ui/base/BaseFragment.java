@@ -10,15 +10,14 @@ import android.view.ViewGroup;
 import com.umeng.analytics.MobclickAgent;
 
 import butterknife.ButterKnife;
-import rx.Subscription;
-import rx.subscriptions.CompositeSubscription;
+import butterknife.Unbinder;
 
 /**
  * Created by sanron on 16-6-28.
  */
 public abstract class BaseFragment extends Fragment {
 
-    private CompositeSubscription mCompositeSubscription;
+    private Unbinder mUnbinder;
 
     @Nullable
     @Override
@@ -27,26 +26,18 @@ public abstract class BaseFragment extends Fragment {
         View root = null;
         if (layoutId != 0) {
             root = inflater.inflate(getLayoutResId(), container, false);
-            ButterKnife.bind(this, root);
+            mUnbinder = ButterKnife.bind(this, root);
         }
         initView(root, savedInstanceState);
         return root;
     }
 
-    protected void addSub(Subscription subscription) {
-        if (mCompositeSubscription == null
-                || mCompositeSubscription.isUnsubscribed()) {
-            mCompositeSubscription = new CompositeSubscription();
-        }
-        mCompositeSubscription.add(subscription);
-    }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (mCompositeSubscription != null
-                && mCompositeSubscription.hasSubscriptions()) {
-            mCompositeSubscription.unsubscribe();
+        if (mUnbinder != null) {
+            mUnbinder.unbind();
         }
     }
 

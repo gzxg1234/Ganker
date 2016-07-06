@@ -13,7 +13,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -26,9 +25,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.sanron.ganker.R;
-import com.sanron.ganker.data.GankerRetrofit;
+import com.sanron.ganker.category_gank.Fragment;
 import com.sanron.ganker.data.entity.Gank;
-import com.sanron.ganker.data.entity.GankData;
 import com.sanron.ganker.ui.base.BaseActivity;
 import com.sanron.ganker.util.Common;
 import com.sanron.ganker.util.PermissionUtil;
@@ -39,8 +37,6 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import rx.Observable;
-import rx.functions.Func1;
 
 public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClickListener, NavigationView.OnNavigationItemSelectedListener {
 
@@ -123,7 +119,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
     public void onShuffle() {
         addFragmentToFront(
                 ShuffleGankFragment.newInstance(
-                        LocalPagerAdapter.TYPES[mViewPager.getCurrentItem()]));
+                        LocalPagerAdapter.CATEGORIES[mViewPager.getCurrentItem()]));
     }
 
 
@@ -185,7 +181,7 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
         return true;
     }
 
-    private void addFragmentToFront(Fragment fragment) {
+    private void addFragmentToFront(android.support.v4.app.Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
                 .setCustomAnimations(R.anim.slide_in_down, R.anim.slide_out_down,
@@ -215,51 +211,29 @@ public class MainActivity extends BaseActivity implements Toolbar.OnMenuItemClic
 
     public static class LocalPagerAdapter extends FragmentPagerAdapter {
 
-        public static final String[] TYPES = {Gank.CATEGORY_ANDROID,
+        public static final String[] CATEGORIES = {Gank.CATEGORY_ANDROID,
                 Gank.CATEGORY_IOS,
                 Gank.CATEGORY_APP,
                 Gank.CATEGORY_FRONT_END,
                 Gank.CATEGORY_EXPAND};
-
-        public static class CategoryGankCreator extends GankPagerFragment.ObservableCreator {
-            private String category;
-
-            public CategoryGankCreator(String category) {
-                this.category = category;
-            }
-
-            @Override
-            public Observable<List<? extends Gank>> onLoad(int pageSize, int page) {
-                return GankerRetrofit
-                        .get()
-                        .getGankService()
-                        .getByCategory(category, pageSize, page)
-                        .map(new Func1<GankData, List<? extends Gank>>() {
-                            @Override
-                            public List<? extends Gank> call(GankData gankData) {
-                                return gankData.results;
-                            }
-                        });
-            }
-        }
 
         public LocalPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
         @Override
-        public Fragment getItem(final int position) {
-            return GankPagerFragment.newInstance(new CategoryGankCreator(TYPES[position]));
+        public android.support.v4.app.Fragment getItem(final int position) {
+            return Fragment.newInstance(CATEGORIES[position]);
         }
 
         @Override
         public int getCount() {
-            return TYPES.length;
+            return CATEGORIES.length;
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return TYPES[position];
+            return CATEGORIES[position];
         }
     }
 

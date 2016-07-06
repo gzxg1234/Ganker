@@ -3,6 +3,9 @@ package com.sanron.ganker;
 import android.app.Application;
 
 import com.bumptech.glide.Glide;
+import com.sanron.ganker.data.DaggerGankerDataComponent;
+import com.sanron.ganker.data.GankerDataComponent;
+import com.sanron.ganker.data.GankerDataModule;
 import com.sanron.ganker.util.ToastUtil;
 
 import java.io.File;
@@ -27,13 +30,19 @@ import rx.schedulers.Schedulers;
 public class Ganker extends Application {
 
 
-    private static Ganker sAppContext;
+    private GankerDataComponent mGankerDataComponent;
+
+    public GankerDataComponent getGankerDataComponent() {
+        return mGankerDataComponent;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        sAppContext = this;
         ToastUtil.init(this);
+        mGankerDataComponent = DaggerGankerDataComponent.builder()
+                .gankerDataModule(new GankerDataModule(this))
+                .build();
     }
 
     @Override
@@ -42,9 +51,6 @@ public class Ganker extends Application {
         Glide.get(this).trimMemory(level);
     }
 
-    public static Ganker get() {
-        return sAppContext;
-    }
 
     public Observable<List<String>> getSearchHistory() {
         return Observable

@@ -1,12 +1,12 @@
-package com.sanron.ganker.ui;
+package com.sanron.ganker.category_gank;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.View;
 
+import com.sanron.ganker.Ganker;
 import com.sanron.ganker.R;
 import com.sanron.ganker.data.entity.Gank;
 import com.sanron.ganker.ui.adapter.GankAdapter;
@@ -16,49 +16,39 @@ import com.sanron.ganker.util.ToastUtil;
 import com.sanron.ganker.widget.DividerItemDecoration;
 import com.sanron.ganker.widget.PullAdapter;
 
-import java.io.Serializable;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
-import rx.Observable;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by sanron on 16-6-28.
  */
-public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, PullAdapter.OnLoadMoreListener {
+public class Fragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, PullAdapter.OnLoadMoreListener, CategoricalGankContract.View {
 
     @BindView(R.id.recycler_view) RecyclerView mRecyclerView;
     @BindView(R.id.refresh_layout) SwipeRefreshLayout mSwipeRefreshLayout;
 
+    @Inject
+    CategoricalGankPresenter mCategoricalGankPresenter;
+
     private GankAdapter mGankAdapter;
-    private int mPage;
     private boolean mIsLoaded;
     private boolean mIsInited;
 
-    private static final int PAGE_SIZE = 20;
-    public static final String ARG_CREATOR = "creator";
-    private ObservableCreator mObservableCreator;
+    public static final String ARG_CATEGORY = "category";
 
-    /**
-     * Observable生产者
-     */
-    public static abstract class ObservableCreator implements Serializable {
-        public abstract Observable<List<? extends Gank>> onLoad(int pageSize, int page);
-    }
-
-    public static GankPagerFragment newInstance(ObservableCreator observableCreator) {
+    public static Fragment newInstance(String category) {
         Bundle args = new Bundle();
-        args.putSerializable(ARG_CREATOR, observableCreator);
-        GankPagerFragment gankPagerFragment = new GankPagerFragment();
+        args.putSerializable(ARG_CATEGORY, category);
+        Fragment gankPagerFragment = new Fragment();
         gankPagerFragment.setArguments(args);
         return gankPagerFragment;
     }
 
     @Override
-    public void initView(View root, Bundle savedInstanceState) {
+    public void initView(android.view.View root, Bundle savedInstanceState) {
         super.initView(root, savedInstanceState);
         mSwipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
         mSwipeRefreshLayout.setOnRefreshListener(this);
@@ -103,8 +93,22 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Bundle args = getArguments();
-        mObservableCreator = (ObservableCreator) args.get(ARG_CREATOR);
+        String category = args.getString(ARG_CATEGORY);
+
+        DaggerCategoricalGankComponent.builder()
+                .gankerDataComponent(((Ganker) getContext().getApplicationContext())
+                        .getGankerDataComponent())
+                .categoricalGankModule(new CategoricalGankModule(category))
+                .build()
+                .inject(this);
+        mCategoricalGankPresenter.attach(this);
         mGankAdapter = new GankAdapter(getContext());
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mCategoricalGankPresenter = null;
     }
 
     @Override
@@ -116,60 +120,33 @@ public class GankPagerFragment extends BaseFragment implements SwipeRefreshLayou
     @Override
     public void onRefresh() {
         mGankAdapter.setLoadEnable(true);
-        loadData(true);
+        mCategoricalGankPresenter.refresh();
     }
 
     @Override
     public void onLoad() {
-        loadData(false);
+        mCategoricalGankPresenter.loadData();
     }
 
-    private class LoadSubscreber extends Subscriber<List<? extends Gank>> {
-
-        private boolean mRefresh;
-
-        public LoadSubscreber(boolean refresh) {
-            mRefresh = refresh;
-        }
-
-        @Override
-        public void onCompleted() {
-            mSwipeRefreshLayout.setRefreshing(false);
-            mGankAdapter.onLoadComplete();
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            e.printStackTrace();
-            mSwipeRefreshLayout.setRefreshing(false);
-            mGankAdapter.onLoadComplete();
-            ToastUtil.shortShow(getString(R.string.load_data_failed));
-        }
-
-        @Override
-        public void onNext(List<? extends Gank> ganks) {
-            if (mRefresh) {
-                mGankAdapter.setData(ganks);
-                mPage = 1;
-            } else {
-                mGankAdapter.addAll(ganks);
-                mPage++;
-            }
-            if (ganks.size() < PAGE_SIZE) {
-                //没有更多
-                mGankAdapter.setLoadEnable(false);
-            }
-        }
+    @Override
+    public void onLoadDataSuccess(List<Gank> ganks) {
+        mGankAdapter.addAll(ganks);
     }
 
-    public void setObservableCreator(ObservableCreator observableCreator) {
-        mObservableCreator = observableCreator;
-        mGankAdapter.setData(null);
-        mIsLoaded = false;
-        if (getUserVisibleHint()
-                && mIsInited) {
-            firstLoad();
-        }
+    @Override
+    public void onRefreshData(List<Gank> ganks) {
+        mGankAdapter.setData(ganks);
     }
 
+    @Override
+    public void onHasNoMore() {
+        mGankAdapter.setLoadEnable(false);
+    }
+
+    @Override
+    public void onLoadDataError() {
+        mSwipeRefreshLayout.setRefreshing(false);
+        mGankAdapter.onLoadComplete();
+        ToastUtil.shortShow(getString(R.string.load_data_failed));
+    }
 }
