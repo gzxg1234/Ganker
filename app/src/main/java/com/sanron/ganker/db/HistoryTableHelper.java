@@ -146,7 +146,7 @@ public class HistoryTableHelper extends BaseHelper {
             @Override
             public Boolean call() throws Exception {
                 boolean result = false;
-                String selection = mTableName + "=?";
+                String selection = SaveGank.COLUMN_ID + "=?";
                 int delCount = getDataBase().delete(mTableName,
                         selection,
                         new String[]{id + ""});

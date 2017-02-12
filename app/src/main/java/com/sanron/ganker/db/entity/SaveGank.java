@@ -11,9 +11,9 @@ public class SaveGank extends Gank {
 
     public long addTime;
 
+    public static final String COLUMN_ID = "_id";
     public static final String TABLE_COLLECTION = "collections";
     public static final String TABLE_HISTORY = "history";
-    public static final String COLUMN_ID = "_id";
     public static final String COLUMN_ADD_TIME = "add_time";
     public static final String COLUMN_GANK_ID = "gank_id";
     public static final String COLUMN_DESC = "desc";

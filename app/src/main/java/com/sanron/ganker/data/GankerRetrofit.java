@@ -80,7 +80,6 @@ public class GankerRetrofit {
         mGankService = mRetrofit.create(GankService.class);
     }
 
-
     public GankService getGankService() {
         return mGankService;
     }
